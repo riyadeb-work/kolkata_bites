@@ -11,10 +11,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
+
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
@@ -50,7 +50,7 @@
             --brand: #1E7D3A;
             --brand-light: #E8F3EB;
         }
-        
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #FAFAFA;
@@ -75,7 +75,7 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        
+
         .glass-dark {
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(12px);
@@ -90,7 +90,7 @@
             100% { transform: translateY(0px); }
         }
         .animate-float { animation: float 6s ease-in-out infinite; }
-        
+
         @keyframes float-delayed {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
@@ -107,42 +107,56 @@
 
         @keyframes type {
             from { width: 0; }
-            to { width: 22ch; }
+            to { width: var(--type-w, 100%); }
         }
         .typing-text {
             overflow: hidden;
             white-space: nowrap;
             border-right: 2px solid var(--brand);
             animation: type 1.8s steps(22, end) forwards, blink-caret .75s step-end infinite;
+            animation-play-state: paused, paused;
+            display: inline-block;
             max-width: 100%;
-            width: 22ch;
-            font-size: clamp(1.5rem, 8.2vw, 4.5rem);
+            width: 0;
+            padding-right: 4px;
+            font-size: clamp(1.4rem, 7.2vw, 4.2rem);
             line-height: 1.15;
+            vertical-align: top;
+        }
+        .typing-text.ready {
+            animation-play-state: running, running;
+        }
+        .typing-text-measure {
+            display: inline-block;
+            white-space: nowrap;
+            visibility: hidden;
+            position: absolute;
+            pointer-events: none;
         }
         @media (min-width: 1024px) {
-            .typing-text { font-size: clamp(2.5rem, 5vw, 4.5rem); }
+            .typing-text { font-size: clamp(2.2rem, 4.4vw, 4.2rem); }
         }
         @keyframes blink-caret {
             from, to { border-color: transparent }
             50% { border-color: var(--brand); }
         }
 
-        /* Hero circular image - explicit square box + full radius, not reliant on Tailwind arbitrary values */
+        /* Hero image - rounded square, bigger */
         .hero-img-wrap {
-            width: 340px;
-            height: 340px;
-            border-radius: 50%;
+            width: 420px;
+            height: 420px;
+            border-radius: 32px;
             overflow: hidden;
             flex-shrink: 0;
         }
         .hero-img {
             width: 100%;
             height: 100%;
-            border-radius: 50%;
+            border-radius: 32px;
             display: block;
         }
         @media (min-width: 1024px) {
-            .hero-img-wrap { width: 400px; height: 400px; }
+            .hero-img-wrap { width: 480px; height: 480px; }
         }
 
         /* Custom Scrollbar */
@@ -212,964 +226,1003 @@
         .reviewSwiper .swiper-pagination-bullet-active {
             background: #fff;
         }
+
+        /* Best Sellers slider */
+        #best-seller-swiper {
+            overflow: hidden;
+            padding: 4px 2px 8px;
+        }
+        #best-seller-swiper .swiper-slide {
+            height: auto;
+        }
+        .best-seller-nav-btn:disabled,
+        .best-seller-nav-btn.swiper-button-disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="text-gray-800 antialiased relative pb-[68px] lg:pb-0">
 
-    <!-- Page Loader -->
-    <div id="page-loader">
-        <i class="ph ph-leaf loader-leaf"></i>
-        <h2 class="font-serif text-2xl mt-4 text-brand font-bold tracking-wider">Kolkata Bites</h2>
-        <p class="text-sm text-gray-500 mt-2 tracking-widest uppercase">Preparing Magic...</p>
-    </div>
+<!-- Page Loader -->
+<div id="page-loader">
+    <i class="ph ph-leaf loader-leaf"></i>
+    <h2 class="font-serif text-2xl mt-4 text-brand font-bold tracking-wider">Kolkata Bites</h2>
+    <p class="text-sm text-gray-500 mt-2 tracking-widest uppercase">Preparing Magic...</p>
+</div>
 
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
+<!-- Toast Container -->
+<div id="toast-container"></div>
 
-    <!-- Navigation -->
-    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 py-4 px-5 sm:px-6 md:px-12 border-b-0 border-transparent bg-transparent">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <!-- Logo -->
-            <a href="#" onclick="navigateSPA('home')" class="flex items-center gap-2 group cursor-pointer">
-                <div class="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-white transform group-hover:rotate-12 transition-transform">
-                    <i class="ph ph-leaf text-2xl"></i>
-                </div>
-                <span class="font-serif text-2xl font-bold nav-text text-white group-hover:text-brand transition-colors drop-shadow-md">Kolkata Bites</span>
-            </a>
-
-            <!-- Desktop Menu -->
-            <div class="hidden lg:flex items-center gap-8">
-                <a href="#best-sellers" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Best Sellers</a>
-                <a href="#our-story" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Story</a>
-                <a href="#reservation" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Reservation</a>
-                <a href="#events" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Events</a>
-                
-                <button onclick="window.location.href='menu.html'" class="px-5 py-2 bg-brand text-white rounded-full font-medium hover:bg-brandDark transition-all transform hover:-translate-y-0.5 shadow-lg">
-                    Menu
-                </button>
-                
-                <!-- Cart Icon -->
-                <button onclick="toggleCart()" class="relative p-2 nav-link text-white hover:text-brand transition-colors">
-                    <i class="ph ph-shopping-cart text-2xl drop-shadow-md"></i>
-                    <span id="cart-count-badge" class="absolute top-0 right-0 w-5 h-5 bg-brand text-white text-xs flex items-center justify-center rounded-full font-bold shadow-sm opacity-0 transition-opacity">0</span>
-                </button>
+<!-- Navigation -->
+<nav id="navbar" class="fixed w-full z-50 transition-all duration-300 py-4 px-5 sm:px-6 md:px-12 border-b-0 border-transparent bg-transparent">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <!-- Logo -->
+        <a href="#" onclick="navigateSPA('home')" class="flex items-center gap-2 group cursor-pointer">
+            <div class="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-white transform group-hover:rotate-12 transition-transform">
+                <i class="ph ph-leaf text-2xl"></i>
             </div>
+            <span class="font-serif text-2xl font-bold nav-text text-white group-hover:text-brand transition-colors drop-shadow-md">Kolkata Bites</span>
+        </a>
 
-            <!-- Mobile Toggle -->
-            <div class="flex items-center gap-4 lg:hidden">
-                <button onclick="toggleCart()" class="relative p-2 nav-link text-white">
-                    <i class="ph ph-shopping-cart text-2xl drop-shadow-md"></i>
-                    <span id="cart-count-badge-mobile" class="absolute top-0 right-0 w-4 h-4 bg-brand text-white text-[10px] flex items-center justify-center rounded-full font-bold opacity-0 transition-opacity">0</span>
-                </button>
-            </div>
+        <!-- Desktop Menu -->
+        <div class="hidden lg:flex items-center gap-8">
+            <a href="#best-sellers" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Best Sellers</a>
+            <a href="#our-story" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Story</a>
+            <a href="#reservation" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Reservation</a>
+            <a href="#events" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Events</a>
+
+            <button onclick="window.location.href='menu.html'" class="px-5 py-2 bg-brand text-white rounded-full font-medium hover:bg-brandDark transition-all transform hover:-translate-y-0.5 shadow-lg">
+                Menu
+            </button>
+
+            <!-- Cart Icon -->
+            <button onclick="toggleCart()" class="relative p-2 nav-link text-white hover:text-brand transition-colors">
+                <i class="ph ph-shopping-cart text-2xl drop-shadow-md"></i>
+                <span id="cart-count-badge" class="absolute top-0 right-0 w-5 h-5 bg-brand text-white text-xs flex items-center justify-center rounded-full font-bold shadow-sm opacity-0 transition-opacity">0</span>
+            </button>
         </div>
-    </nav>
 
-    <!-- Mobile Bottom App Nav -->
-    <nav id="bottom-nav" class="lg:hidden fixed bottom-0 left-0 w-full z-[95] bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div class="grid grid-cols-5">
-            <a href="#hero" onclick="navigateSPA('home'); setTimeout(()=>window.scrollTo(0,0),50); setBottomNavActive(this)" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-brand transition-colors" data-active="true">
-                <i class="ph-fill ph-house text-[22px]"></i>
-                <span class="text-[10px] font-medium">Home</span>
-            </a>
-            <a href="menu.html" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
-                <i class="ph ph-bowl-food text-[22px]"></i>
-                <span class="text-[10px] font-medium">Menu</span>
-            </a>
-            <a href="#reservation" onclick="navigateSPA('home'); setBottomNavActive(this)" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
-                <i class="ph ph-calendar-check text-[22px]"></i>
-                <span class="text-[10px] font-medium">Reserve</span>
-            </a>
-            <button onclick="toggleCart()" class="bottom-nav-link relative flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
+        <!-- Mobile Toggle -->
+        <div class="flex items-center gap-4 lg:hidden">
+            <button onclick="toggleCart()" class="relative p-2 nav-link text-white">
+                <i class="ph ph-shopping-cart text-2xl drop-shadow-md"></i>
+                <span id="cart-count-badge-mobile" class="absolute top-0 right-0 w-4 h-4 bg-brand text-white text-[10px] flex items-center justify-center rounded-full font-bold opacity-0 transition-opacity">0</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Mobile Bottom App Nav -->
+<nav id="bottom-nav" class="lg:hidden fixed bottom-0 left-0 w-full z-[95] bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+    <div class="grid grid-cols-5">
+        <a href="#hero" onclick="navigateSPA('home'); setTimeout(()=>window.scrollTo(0,0),50); setBottomNavActive(this)" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-brand transition-colors" data-active="true">
+            <i class="ph-fill ph-house text-[22px]"></i>
+            <span class="text-[10px] font-medium">Home</span>
+        </a>
+        <a href="menu.html" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
+            <i class="ph ph-bowl-food text-[22px]"></i>
+            <span class="text-[10px] font-medium">Menu</span>
+        </a>
+        <a href="#reservation" onclick="navigateSPA('home'); setBottomNavActive(this)" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
+            <i class="ph ph-calendar-check text-[22px]"></i>
+            <span class="text-[10px] font-medium">Reserve</span>
+        </a>
+        <button onclick="toggleCart()" class="bottom-nav-link relative flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
                 <span class="relative">
                     <i class="ph ph-shopping-cart text-[22px]"></i>
                     <span id="cart-count-badge-bottom" class="absolute -top-1.5 -right-2.5 w-4 h-4 bg-brand text-white text-[9px] flex items-center justify-center rounded-full font-bold opacity-0 transition-opacity">0</span>
                 </span>
-                <span class="text-[10px] font-medium">Cart</span>
-            </button>
-            <a href="#contact" onclick="navigateSPA('home'); setBottomNavActive(this)" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
-                <i class="ph ph-map-pin text-[22px]"></i>
-                <span class="text-[10px] font-medium">Contact</span>
-            </a>
-        </div>
-    </nav>
+            <span class="text-[10px] font-medium">Cart</span>
+        </button>
+        <a href="#contact" onclick="navigateSPA('home'); setBottomNavActive(this)" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
+            <i class="ph ph-map-pin text-[22px]"></i>
+            <span class="text-[10px] font-medium">Contact</span>
+        </a>
+    </div>
+</nav>
 
-    <!-- Slide-out Cart Sidebar -->
-    <div id="cart-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] hidden opacity-0 transition-opacity duration-300" onclick="toggleCart()"></div>
-    <div id="cart-sidebar" class="fixed top-0 right-0 w-full md:w-[400px] h-full bg-white z-[101] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
-        <!-- Cart Header -->
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h2 class="font-serif text-xl font-bold flex items-center gap-2">
-                <i class="ph ph-shopping-bag text-brand"></i> Your Order
-            </h2>
-            <button onclick="toggleCart()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                <i class="ph ph-x"></i>
-            </button>
-        </div>
+<!-- Slide-out Cart Sidebar -->
+<div id="cart-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] hidden opacity-0 transition-opacity duration-300" onclick="toggleCart()"></div>
+<div id="cart-sidebar" class="fixed top-0 right-0 w-full md:w-[400px] h-full bg-white z-[101] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Cart Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-100">
+        <h2 class="font-serif text-xl font-bold flex items-center gap-2">
+            <i class="ph ph-shopping-bag text-brand"></i> Your Order
+        </h2>
+        <button onclick="toggleCart()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <i class="ph ph-x"></i>
+        </button>
+    </div>
 
-        <!-- Cart Items Container -->
-        <div id="cart-items" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-            <!-- Items injected via JS -->
-            <div id="empty-cart-msg" class="flex flex-col items-center justify-center h-full text-gray-400 opacity-60">
-                <i class="ph-duotone ph-shopping-cart text-6xl mb-4"></i>
-                <p>Your cart is empty.</p>
-            </div>
-        </div>
-
-        <!-- Cart Footer -->
-        <div class="p-6 border-t border-gray-100 bg-gray-50">
-            <div class="flex justify-between items-center mb-2 text-sm text-gray-600">
-                <span>Subtotal</span>
-                <span id="cart-subtotal" class="font-medium text-gray-900">₹0</span>
-            </div>
-            <div class="flex justify-between items-center mb-4 text-sm text-gray-600">
-                <span>Delivery (Calculated later)</span>
-                <span>--</span>
-            </div>
-            <div class="flex justify-between items-center mb-6">
-                <span class="font-semibold text-lg">Grand Total</span>
-                <span id="cart-total" class="font-serif font-bold text-xl text-brand">₹0</span>
-            </div>
-            <button onclick="openCheckoutModal()" class="w-full py-4 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand/30">
-                Checkout via WhatsApp <i class="ph ph-whatsapp-logo text-xl"></i>
-            </button>
+    <!-- Cart Items Container -->
+    <div id="cart-items" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+        <!-- Items injected via JS -->
+        <div id="empty-cart-msg" class="flex flex-col items-center justify-center h-full text-gray-400 opacity-60">
+            <i class="ph-duotone ph-shopping-cart text-6xl mb-4"></i>
+            <p>Your cart is empty.</p>
         </div>
     </div>
 
-    <!-- Checkout Modal -->
-    <div id="checkout-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[105] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="checkout-modal-content">
-            <div class="p-6 border-b border-gray-100 bg-brandLight/30 flex justify-between items-center">
-                <h3 class="font-serif text-xl font-bold text-gray-900">Delivery Details</h3>
-                <button onclick="closeCheckoutModal()" class="text-gray-400 hover:text-gray-800"><i class="ph ph-x text-xl"></i></button>
-            </div>
-            <form id="checkout-form" onsubmit="processWhatsAppCheckout(event)" class="p-6 flex flex-col gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input type="text" id="co-name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50" placeholder="e.g. John Doe">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                    <input type="tel" id="co-phone" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50" placeholder="e.g. +91 9876543210">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Complete Address</label>
-                    <textarea id="co-address" required rows="2" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50" placeholder="House/Flat No, Street, Landmark"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label>
-                        <select id="co-time" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50">
-                            <option value="ASAP">ASAP</option>
-                            <option value="Later Today">Later Today</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Mode</label>
-                        <select id="co-payment" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50">
-                            <option value="UPI / Online">UPI / Online</option>
-                            <option value="Cash on Delivery">Cash on Delivery</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="w-full py-4 mt-2 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand/30">
-                    Send Order <i class="ph ph-paper-plane-right"></i>
-                </button>
-            </form>
+    <!-- Cart Footer -->
+    <div class="p-6 border-t border-gray-100 bg-gray-50">
+        <div class="flex justify-between items-center mb-2 text-sm text-gray-600">
+            <span>Subtotal</span>
+            <span id="cart-subtotal" class="font-medium text-gray-900">₹0</span>
         </div>
+        <div class="flex justify-between items-center mb-4 text-sm text-gray-600">
+            <span>Delivery (Calculated later)</span>
+            <span>--</span>
+        </div>
+        <div class="flex justify-between items-center mb-6">
+            <span class="font-semibold text-lg">Grand Total</span>
+            <span id="cart-total" class="font-serif font-bold text-xl text-brand">₹0</span>
+        </div>
+        <button onclick="openCheckoutModal()" class="w-full py-4 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand/30">
+            Checkout via WhatsApp <i class="ph ph-whatsapp-logo text-xl"></i>
+        </button>
     </div>
+</div>
 
-    <main id="app-container">
-        
-        <!-- VIEW 1: HOME PAGE -->
-        <div id="view-home" class="block">
-            
-            <!-- Hero Section -->
-            <section id="hero" class="relative min-h-screen flex items-center pt-28 sm:pt-24 pb-24 overflow-hidden bg-[#0A110D]">
-                <div class="absolute inset-0 z-0 bg-black">
-                    <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop" alt="Restaurant Ambiance" class="w-full h-full object-cover opacity-30 transform scale-105" data-speed="0.5" id="hero-bg">
-                    <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent"></div>
+<!-- Checkout Modal -->
+<div id="checkout-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[105] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="checkout-modal-content">
+        <div class="p-6 border-b border-gray-100 bg-brandLight/30 flex justify-between items-center">
+            <h3 class="font-serif text-xl font-bold text-gray-900">Delivery Details</h3>
+            <button onclick="closeCheckoutModal()" class="text-gray-400 hover:text-gray-800"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <form id="checkout-form" onsubmit="processWhatsAppCheckout(event)" class="p-6 flex flex-col gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input type="text" id="co-name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50" placeholder="e.g. John Doe">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="tel" id="co-phone" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50" placeholder="e.g. +91 9876543210">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Complete Address</label>
+                <textarea id="co-address" required rows="2" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50" placeholder="House/Flat No, Street, Landmark"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label>
+                    <select id="co-time" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50">
+                        <option value="ASAP">ASAP</option>
+                        <option value="Later Today">Later Today</option>
+                    </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Mode</label>
+                    <select id="co-payment" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand bg-gray-50">
+                        <option value="UPI / Online">UPI / Online</option>
+                        <option value="Cash on Delivery">Cash on Delivery</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="w-full py-4 mt-2 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand/30">
+                Send Order <i class="ph ph-paper-plane-right"></i>
+            </button>
+        </form>
+    </div>
+</div>
 
-                <!-- Floating Abstract Elements -->
-                <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-brand/30 rounded-full blur-[100px] z-0 animate-float"></div>
-                <div class="absolute bottom-1/4 left-1/4 w-96 h-96 bg-gold/20 rounded-full blur-[120px] z-0 animate-float-delayed"></div>
+<main id="app-container">
 
-                <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-                    <!-- Text Content -->
-                    <div class="text-white max-w-2xl hero-content">
-                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-dark mb-5 sm:mb-6 border-white/20">
-                            <span class="w-2 h-2 rounded-full bg-brand animate-pulse shrink-0"></span>
-                            <span class="text-[11px] sm:text-xs font-medium tracking-wider uppercase text-gray-200">Michelin Experience, Bengali Soul</span>
-                        </div>
-                        
-                        <h1 class="text-[2.5rem] leading-[1.15] sm:text-5xl sm:leading-[1.15] md:text-6xl lg:text-7xl font-serif font-bold mb-5 sm:mb-6 break-words">
-                            Authentic Bengali Taste <br>
-                            <span class="text-brand italic block mt-2 max-w-full">
+    <!-- VIEW 1: HOME PAGE -->
+    <div id="view-home" class="block">
+
+        <!-- Hero Section -->
+        <section id="hero" class="relative min-h-screen flex items-center pt-28 sm:pt-24 pb-24 overflow-hidden bg-[#0A110D]">
+            <div class="absolute inset-0 z-0 bg-black">
+                <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop" alt="Restaurant Ambiance" class="w-full h-full object-cover opacity-30 transform scale-105" data-speed="0.5" id="hero-bg">
+                <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent"></div>
+            </div>
+
+            <!-- Floating Abstract Elements -->
+            <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-brand/30 rounded-full blur-[100px] z-0 animate-float"></div>
+            <div class="absolute bottom-1/4 left-1/4 w-96 h-96 bg-gold/20 rounded-full blur-[120px] z-0 animate-float-delayed"></div>
+
+            <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+                <!-- Text Content -->
+                <div class="text-white max-w-2xl hero-content">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-dark mb-5 sm:mb-6 border-white/20">
+                        <span class="w-2 h-2 rounded-full bg-brand animate-pulse shrink-0"></span>
+                        <span class="text-[11px] sm:text-xs font-medium tracking-wider uppercase text-gray-200">Michelin Experience, Bengali Soul</span>
+                    </div>
+
+                    <h1 class="text-[2.5rem] leading-[1.15] sm:text-5xl sm:leading-[1.15] md:text-6xl lg:text-7xl font-serif font-bold mb-5 sm:mb-6 break-words">
+                        Authentic Bengali Taste <br>
+                        <span class="text-brand italic block mt-2 max-w-full">
                                 <span class="typing-text inline-block max-w-full overflow-hidden whitespace-nowrap">Made Fresh Every Day.</span>
                             </span>
-                        </h1>
-                        
-                        <p class="text-base sm:text-lg text-gray-300 mb-8 font-light leading-relaxed max-w-lg">
-                            Experience a culinary journey through the heart of Bengal. Premium ingredients, traditional recipes, and modern elegance combined.
+                    </h1>
+
+                    <p class="text-base sm:text-lg text-gray-300 mb-8 font-light leading-relaxed max-w-full sm:max-w-lg">
+                        Experience a culinary journey through the heart of Bengal. Premium ingredients, traditional recipes, and modern elegance combined.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#best-sellers" class="px-6 sm:px-8 py-3.5 sm:py-4 bg-brand text-white rounded-full font-medium hover:bg-white hover:text-brand transition-all transform hover:-translate-y-1 shadow-lg shadow-brand/30 flex items-center gap-2 group text-sm sm:text-base">
+                            Order Now <i class="ph ph-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                        <a href="#reservation" class="px-6 sm:px-8 py-3.5 sm:py-4 glass-dark text-white rounded-full font-medium hover:bg-white/10 transition-all transform hover:-translate-y-1 flex items-center gap-2 text-sm sm:text-base">
+                            Reserve Table
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Hero Visuals -->
+                <div class="relative h-[420px] lg:h-[560px] hidden lg:flex items-center justify-center hero-visual">
+                    <div class="relative z-20 animate-float shadow-2xl hero-img-wrap">
+                        <img src="https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?q=80&w=800&auto=format&fit=crop" alt="Premium Biryani" class="hero-img object-cover border-4 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Wave Divider -->
+            <div class="absolute bottom-[-1px] left-0 w-full overflow-hidden leading-none z-10 pointer-events-none">
+                <svg class="relative block w-full h-[40px] sm:h-[60px] md:h-[80px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M0,0 C300,90 900,90 1200,0 L1200,120 L0,120 Z" fill="#FAFAFA"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Why Choose Us -->
+        <section class="py-16 sm:py-20 md:py-24 bg-surface relative z-20">
+            <div class="container mx-auto px-5 sm:px-6 md:px-12">
+                <div class="text-center mb-16 gs-reveal">
+                    <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Our Philosophy</span>
+                    <h2 class="text-4xl md:text-5xl font-serif font-bold text-gray-900">Why Choose Kolkata Bites</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
+                        <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-plant"></i></div>
+                        <h3 class="font-serif font-bold text-xl mb-3">Fresh Ingredients</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">We source organic, fresh local produce daily to ensure the highest quality taste in every bite.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
+                        <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-sparkle"></i></div>
+                        <h3 class="font-serif font-bold text-xl mb-3">Premium Hygiene</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">Our kitchens maintain Michelin-standard cleanliness protocols for your absolute safety.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
+                        <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-chef-hat"></i></div>
+                        <h3 class="font-serif font-bold text-xl mb-3">Experienced Chefs</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">Master chefs with decades of experience crafting authentic Bengali culinary masterpieces.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
+                        <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-moped"></i></div>
+                        <h3 class="font-serif font-bold text-xl mb-3">Fast Delivery</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">Hot and fresh food delivered right to your doorstep with our express delivery partners.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Best Sellers -->
+        <section id="best-sellers" class="py-16 sm:py-20 md:py-24 bg-white">
+            <div class="container mx-auto px-5 sm:px-6 md:px-12">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gs-reveal text-left">
+                    <div>
+                        <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Our Masterpieces</span>
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-gray-900">Best Sellers</h2>
+                    </div>
+                    <button onclick="window.location.href='menu.html'" class="mt-4 md:mt-0 text-brand font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                        View Full Menu <i class="ph ph-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Food Slider (Injected by JS via Swiper) -->
+                <div class="relative lg:px-8">
+                    <div class="swiper bestSellerSwiper" id="best-seller-swiper">
+                        <div class="swiper-wrapper" id="food-grid">
+                            <div class="swiper-slide"><div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div></div>
+                            <div class="swiper-slide"><div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div></div>
+                            <div class="swiper-slide"><div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div></div>
+                            <div class="swiper-slide"><div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div></div>
+                        </div>
+                    </div>
+                    <!-- Nav arrows: sit in the side gutter, never overlap card content. Only shown (and only meaningful) when there are more than 3 items — controlled in JS -->
+                    <button id="best-seller-prev" class="best-seller-nav-btn hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-gray-700 hover:bg-brand hover:text-white hover:border-brand transition-colors">
+                        <i class="ph-bold ph-caret-left text-base"></i>
+                    </button>
+                    <button id="best-seller-next" class="best-seller-nav-btn hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-gray-700 hover:bg-brand hover:text-white hover:border-brand transition-colors">
+                        <i class="ph-bold ph-caret-right text-base"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dish of the Month -->
+        <section id="dish-of-month" class="py-16 sm:py-20 md:py-24 bg-brandLight relative overflow-hidden">
+            <div class="absolute -right-40 -top-40 w-96 h-96 bg-brand/10 rounded-full blur-3xl"></div>
+
+            <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10">
+                <div class="group bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col lg:flex-row gs-reveal transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-15px_rgba(30,125,58,0.35)]">
+                    <div class="lg:w-2/5 relative h-[280px] sm:h-[340px] lg:h-auto overflow-hidden">
+                        <img id="dish-of-month-img" src="https://images.unsplash.com/photo-1606491956689-2ea866880c84?q=80&w=800&auto=format&fit=crop" alt="Dish of the Month" class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 sm:p-8">
+                            <div>
+                                <h3 id="dish-of-month-overlay-title" class="text-white font-serif text-2xl font-bold">Limited Time Only</h3>
+                                <p id="dish-of-month-overlay-subtitle" class="text-gray-300 text-sm">Featured this month</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-3/5 p-6 sm:p-10 lg:p-16 flex flex-col justify-center">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold uppercase tracking-wider mb-6 w-max">
+                            <i class="ph-fill ph-star"></i> Dish of the Month
+                        </div>
+                        <h2 id="dish-of-month-name" class="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-4">Kosha Mangsho & Basanti Pulao</h2>
+                        <p id="dish-of-month-desc" class="text-gray-600 mb-8 leading-relaxed">
+                            This recipe has been passed down through generations. Slow-cooked mutton in rich, aromatic spices, served with sweet and fragrant yellow rice. It is not just food; it is an emotion on a plate.
                         </p>
-                        
-                        <div class="flex flex-wrap gap-4">
-                            <a href="#best-sellers" class="px-6 sm:px-8 py-3.5 sm:py-4 bg-brand text-white rounded-full font-medium hover:bg-white hover:text-brand transition-all transform hover:-translate-y-1 shadow-lg shadow-brand/30 flex items-center gap-2 group text-sm sm:text-base">
-                                Order Now <i class="ph ph-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                            </a>
-                            <a href="#reservation" class="px-6 sm:px-8 py-3.5 sm:py-4 glass-dark text-white rounded-full font-medium hover:bg-white/10 transition-all transform hover:-translate-y-1 flex items-center gap-2 text-sm sm:text-base">
-                                Reserve Table
-                            </a>
+
+                        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                            <div>
+                                <span id="dish-of-month-price" class="text-brand font-bold text-2xl">₹450</span>
+                                <span id="dish-of-month-strike" class="text-gray-400 text-sm line-through ml-2">₹550</span>
+                            </div>
+                            <button id="dish-of-month-add-btn" class="px-6 py-3 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors shadow-lg shadow-brand/30">
+                                Add to Cart
+                            </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
 
-                    <!-- Hero Visuals (3D Composition) -->
-                    <div class="relative h-[420px] lg:h-[500px] hidden lg:block hero-visual">
-                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 animate-float shadow-2xl hero-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?q=80&w=800&auto=format&fit=crop" alt="Premium Biryani" class="hero-img object-cover border-4 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+        <!-- Our Story -->
+        <section id="our-story" class="py-16 sm:py-20 md:py-24 bg-white">
+            <div class="container mx-auto px-5 sm:px-6 md:px-12">
+                <div class="flex flex-col lg:flex-row items-center gap-16">
+                    <div class="lg:w-1/2 gs-reveal">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop" class="rounded-3xl shadow-2xl w-full" alt="Restaurant Interior">
+                            <div class="absolute -bottom-8 -right-8 bg-white p-4 rounded-2xl shadow-xl hidden md:block">
+                                <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=300&auto=format&fit=crop" class="w-48 h-48 object-cover rounded-xl" alt="Spices">
+                            </div>
                         </div>
-                        <!-- Floating Cards -->
-                        <div class="absolute top-16 lg:top-20 right-2 lg:right-10 z-30 glass-dark p-4 rounded-2xl flex items-center gap-4 animate-float-delayed shadow-xl backdrop-blur-md">
-                            <div class="w-12 h-12 rounded-full bg-brand flex items-center justify-center text-white text-xl shrink-0">
-                                <i class="ph-fill ph-star"></i>
+                    </div>
+                    <div class="lg:w-1/2 gs-reveal">
+                        <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Our Heritage</span>
+                        <h2 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6">A Legacy of Taste Since 1995</h2>
+                        <p class="text-gray-600 mb-6 leading-relaxed">
+                            What started as a small family kitchen has blossomed into Kolkata's most beloved premium dining destination. Our mission has always been simple: to preserve the authenticity of traditional Bengali recipes while presenting them with modern elegance.
+                        </p>
+                        <p class="text-gray-600 mb-8 leading-relaxed">
+                            Every spice is hand-ground, every ingredient is locally sourced, and every dish is prepared with the same love and warmth you would find in a Bengali home.
+                        </p>
+                        <div class="grid grid-cols-2 gap-6 border-t border-gray-100 pt-8">
+                            <div>
+                                <h4 class="text-3xl font-serif font-bold text-brand mb-1">25+</h4>
+                                <p class="text-sm text-gray-500">Years of Excellence</p>
                             </div>
                             <div>
-                                <p class="text-white font-bold text-sm whitespace-nowrap">4.9/5 Rating</p>
-                                <p class="text-gray-400 text-xs whitespace-nowrap">Based on 2k+ reviews</p>
+                                <h4 class="text-3xl font-serif font-bold text-brand mb-1">50k+</h4>
+                                <p class="text-sm text-gray-500">Happy Customers</p>
                             </div>
                         </div>
-                        <div class="absolute bottom-16 lg:bottom-20 left-0 z-30 glass-dark p-4 rounded-2xl flex items-center gap-4 animate-float shadow-xl backdrop-blur-md">
-                            <div class="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center text-white text-xl shrink-0">
-                                <i class="ph-fill ph-fire"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table Reservation -->
+        <section id="reservation" class="py-16 sm:py-20 md:py-24 bg-surface relative">
+            <div class="container mx-auto px-5 sm:px-6 md:px-12">
+                <div class="max-w-5xl mx-auto bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden flex flex-col md:flex-row gs-reveal">
+
+                    <div class="md:w-5/12 relative hidden md:block">
+                        <img src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Restaurant Table">
+                        <div class="absolute inset-0 bg-brand/20 backdrop-blur-[2px]"></div>
+                    </div>
+
+                    <div class="md:w-7/12 p-6 sm:p-10 md:p-14">
+                        <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Book a Table</span>
+                        <h2 class="text-3xl font-serif font-bold text-gray-900 mb-8">Reserve Your Experience</h2>
+
+                        <form id="reservation-form" onsubmit="handleReservation(event)" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                                    <input type="text" id="res-name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                                    <input type="tel" id="res-phone" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                                    <input type="date" id="res-date" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                                    <input type="time" id="res-time" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Guests</label>
+                                    <select id="res-guests" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
+                                        <option>2 People</option>
+                                        <option>3 People</option>
+                                        <option>4 People</option>
+                                        <option>5+ People</option>
+                                    </select>
+                                </div>
                             </div>
                             <div>
-                                <p class="text-white font-bold text-sm whitespace-nowrap">Hot & Fresh</p>
-                                <p class="text-gray-400 text-xs whitespace-nowrap">Direct from kitchen</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Special Request (Optional)</label>
+                                <textarea id="res-request" rows="2" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all"></textarea>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Bottom Wave Divider -->
-                <div class="absolute bottom-[-1px] left-0 w-full overflow-hidden leading-none z-10 pointer-events-none">
-                    <svg class="relative block w-full h-[40px] sm:h-[60px] md:h-[80px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                        <path d="M0,0 C300,90 900,90 1200,0 L1200,120 L0,120 Z" fill="#FAFAFA"></path>
-                    </svg>
-                </div>
-            </section>
-
-            <!-- Why Choose Us -->
-            <section class="py-16 sm:py-20 md:py-24 bg-surface relative z-20">
-                <div class="container mx-auto px-5 sm:px-6 md:px-12">
-                    <div class="text-center mb-16 gs-reveal">
-                        <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Our Philosophy</span>
-                        <h2 class="text-4xl md:text-5xl font-serif font-bold text-gray-900">Why Choose Kolkata Bites</h2>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
-                            <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-plant"></i></div>
-                            <h3 class="font-serif font-bold text-xl mb-3">Fresh Ingredients</h3>
-                            <p class="text-gray-500 text-sm leading-relaxed">We source organic, fresh local produce daily to ensure the highest quality taste in every bite.</p>
-                        </div>
-                        <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
-                            <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-sparkle"></i></div>
-                            <h3 class="font-serif font-bold text-xl mb-3">Premium Hygiene</h3>
-                            <p class="text-gray-500 text-sm leading-relaxed">Our kitchens maintain Michelin-standard cleanliness protocols for your absolute safety.</p>
-                        </div>
-                        <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
-                            <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-chef-hat"></i></div>
-                            <h3 class="font-serif font-bold text-xl mb-3">Experienced Chefs</h3>
-                            <p class="text-gray-500 text-sm leading-relaxed">Master chefs with decades of experience crafting authentic Bengali culinary masterpieces.</p>
-                        </div>
-                        <div class="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-50 gs-reveal">
-                            <div class="w-16 h-16 rounded-2xl bg-brandLight text-brand flex items-center justify-center text-3xl mb-6"><i class="ph-duotone ph-moped"></i></div>
-                            <h3 class="font-serif font-bold text-xl mb-3">Fast Delivery</h3>
-                            <p class="text-gray-500 text-sm leading-relaxed">Hot and fresh food delivered right to your doorstep with our express delivery partners.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Best Sellers -->
-            <section id="best-sellers" class="py-16 sm:py-20 md:py-24 bg-white">
-                <div class="container mx-auto px-5 sm:px-6 md:px-12">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gs-reveal text-left">
-                        <div>
-                            <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Our Masterpieces</span>
-                            <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-gray-900">Best Sellers</h2>
-                        </div>
-                        <button onclick="window.location.href='menu.html'" class="mt-4 md:mt-0 text-brand font-medium flex items-center gap-2 hover:gap-3 transition-all">
-                            View Full Menu <i class="ph ph-arrow-right"></i>
-                        </button>
-                    </div>
-
-                    <!-- Food Grid (Injected by JS) -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8" id="food-grid">
-                        <div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
-                        <div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
-                        <div class="rounded-3xl overflow-hidden border border-gray-100 hidden md:block"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
-                        <div class="rounded-3xl overflow-hidden border border-gray-100 hidden xl:block"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Chef Recommendation -->
-            <section id="chef-special" class="py-16 sm:py-20 md:py-24 bg-brandLight relative overflow-hidden">
-                <div class="absolute -right-40 -top-40 w-96 h-96 bg-brand/10 rounded-full blur-3xl"></div>
-                
-                <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10">
-                    <div class="bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col lg:flex-row gs-reveal">
-                        <div class="lg:w-2/5 relative h-[280px] sm:h-[340px] lg:h-auto">
-                            <img id="chef-special-img" src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=800&auto=format&fit=crop" alt="Executive Chef" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 sm:p-8">
-                                <div>
-                                    <h3 class="text-white font-serif text-2xl font-bold">Chef Arindam</h3>
-                                    <p class="text-gray-300 text-sm">Executive Head Chef</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="lg:w-3/5 p-6 sm:p-10 lg:p-16 flex flex-col justify-center">
-                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold uppercase tracking-wider mb-6 w-max">
-                                <i class="ph-fill ph-star"></i> Chef's Signature
-                            </div>
-                            <h2 id="chef-special-name" class="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-4">Kosha Mangsho & Basanti Pulao</h2>
-                            <p id="chef-special-desc" class="text-gray-600 mb-8 leading-relaxed">
-                                "This recipe has been passed down through generations in my family. Slow-cooked mutton in rich, aromatic spices, served with sweet and fragrant yellow rice. It is not just food; it is an emotion on a plate."
-                            </p>
-                            
-                            <div class="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <div>
-                                    <span id="chef-special-price" class="text-brand font-bold text-2xl">₹450</span>
-                                    <span id="chef-special-strike" class="text-gray-400 text-sm line-through ml-2">₹550</span>
-                                </div>
-                                <button id="chef-special-add-btn" class="px-6 py-3 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors shadow-lg shadow-brand/30">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Our Story -->
-            <section id="our-story" class="py-16 sm:py-20 md:py-24 bg-white">
-                <div class="container mx-auto px-5 sm:px-6 md:px-12">
-                    <div class="flex flex-col lg:flex-row items-center gap-16">
-                        <div class="lg:w-1/2 gs-reveal">
-                            <div class="relative">
-                                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop" class="rounded-3xl shadow-2xl w-full" alt="Restaurant Interior">
-                                <div class="absolute -bottom-8 -right-8 bg-white p-4 rounded-2xl shadow-xl hidden md:block">
-                                    <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=300&auto=format&fit=crop" class="w-48 h-48 object-cover rounded-xl" alt="Spices">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="lg:w-1/2 gs-reveal">
-                            <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Our Heritage</span>
-                            <h2 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6">A Legacy of Taste Since 1995</h2>
-                            <p class="text-gray-600 mb-6 leading-relaxed">
-                                What started as a small family kitchen has blossomed into Kolkata's most beloved premium dining destination. Our mission has always been simple: to preserve the authenticity of traditional Bengali recipes while presenting them with modern elegance.
-                            </p>
-                            <p class="text-gray-600 mb-8 leading-relaxed">
-                                Every spice is hand-ground, every ingredient is locally sourced, and every dish is prepared with the same love and warmth you would find in a Bengali home.
-                            </p>
-                            <div class="grid grid-cols-2 gap-6 border-t border-gray-100 pt-8">
-                                <div>
-                                    <h4 class="text-3xl font-serif font-bold text-brand mb-1">25+</h4>
-                                    <p class="text-sm text-gray-500">Years of Excellence</p>
-                                </div>
-                                <div>
-                                    <h4 class="text-3xl font-serif font-bold text-brand mb-1">50k+</h4>
-                                    <p class="text-sm text-gray-500">Happy Customers</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Table Reservation -->
-            <section id="reservation" class="py-16 sm:py-20 md:py-24 bg-surface relative">
-                <div class="container mx-auto px-5 sm:px-6 md:px-12">
-                    <div class="max-w-5xl mx-auto bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden flex flex-col md:flex-row gs-reveal">
-                        
-                        <div class="md:w-5/12 relative hidden md:block">
-                            <img src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Restaurant Table">
-                            <div class="absolute inset-0 bg-brand/20 backdrop-blur-[2px]"></div>
-                        </div>
-
-                        <div class="md:w-7/12 p-6 sm:p-10 md:p-14">
-                            <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Book a Table</span>
-                            <h2 class="text-3xl font-serif font-bold text-gray-900 mb-8">Reserve Your Experience</h2>
-                            
-                            <form id="reservation-form" onsubmit="handleReservation(event)" class="space-y-6">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                                        <input type="text" id="res-name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                                        <input type="tel" id="res-phone" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                                        <input type="date" id="res-date" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
-                                        <input type="time" id="res-time" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Guests</label>
-                                        <select id="res-guests" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all">
-                                            <option>2 People</option>
-                                            <option>3 People</option>
-                                            <option>4 People</option>
-                                            <option>5+ People</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Special Request (Optional)</label>
-                                    <textarea id="res-request" rows="2" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand outline-none bg-gray-50 transition-all"></textarea>
-                                </div>
-                                <button type="submit" class="w-full py-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-brand transition-colors flex items-center justify-center gap-2 shadow-lg">
-                                    Confirm via WhatsApp <i class="ph ph-whatsapp-logo text-xl"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Events & Catering -->
-            <section id="events" class="py-16 sm:py-20 md:py-24 bg-white border-t border-gray-100">
-                <div class="container mx-auto px-5 sm:px-6 md:px-12">
-                    <div class="text-center mb-16 gs-reveal">
-                        <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Make Memories</span>
-                        <h2 class="text-4xl font-serif font-bold text-gray-900">Events & Catering</h2>
-                        <p class="text-gray-500 mt-4 max-w-2xl mx-auto">We provide premium catering services for weddings, corporate events, and private house parties.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 gs-reveal">
-                        <div class="bg-surface p-8 rounded-3xl shadow-sm text-center border border-gray-100 hover:border-brand transition-colors">
-                            <i class="ph-duotone ph-confetti text-5xl text-brand mb-4"></i>
-                            <h4 class="font-bold text-lg mb-2">Weddings & Anniversaries</h4>
-                            <p class="text-sm text-gray-500">Complete luxury dining setup.</p>
-                        </div>
-                        <div class="bg-surface p-8 rounded-3xl shadow-sm text-center border border-gray-100 hover:border-brand transition-colors">
-                            <i class="ph-duotone ph-buildings text-5xl text-brand mb-4"></i>
-                            <h4 class="font-bold text-lg mb-2">Corporate Events</h4>
-                            <p class="text-sm text-gray-500">Professional buffets and boxed meals.</p>
-                        </div>
-                        <div class="bg-surface p-8 rounded-3xl shadow-sm text-center border border-gray-100 hover:border-brand transition-colors">
-                            <i class="ph-duotone ph-house-line text-5xl text-brand mb-4"></i>
-                            <h4 class="font-bold text-lg mb-2">Private House Parties</h4>
-                            <p class="text-sm text-gray-500">Intimate gatherings with live counters.</p>
-                        </div>
-                    </div>
-
-                    <div class="max-w-3xl mx-auto bg-surface p-8 md:p-12 rounded-3xl shadow-md border border-gray-100 gs-reveal">
-                        <form id="catering-form" onsubmit="handleCatering(event)" class="space-y-5">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <input type="text" id="cat-name" placeholder="Your Name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
-                                <input type="tel" id="cat-phone" placeholder="Phone Number" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
-                                <input type="text" id="cat-event" placeholder="Event Type (e.g. Birthday)" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
-                                <input type="number" id="cat-guests" placeholder="Expected Guests" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
-                                <input type="text" id="cat-budget" placeholder="Approx. Budget (₹)" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand md:col-span-2">
-                            </div>
-                            <textarea id="cat-req" placeholder="Specific Requirements / Menu Preferences" rows="3" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand"></textarea>
-                            <button type="submit" class="w-full py-4 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors shadow-lg shadow-brand/30 flex items-center justify-center gap-2">
-                                Send Enquiry to WhatsApp <i class="ph ph-whatsapp-logo text-xl"></i>
+                            <button type="submit" class="w-full py-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-brand transition-colors flex items-center justify-center gap-2 shadow-lg">
+                                Confirm via WhatsApp <i class="ph ph-whatsapp-logo text-xl"></i>
                             </button>
                         </form>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- Reviews Section -->
-            <section class="py-16 sm:py-20 md:py-24 bg-brand text-white relative overflow-hidden">
-                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-                <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10">
-                    <div class="text-center mb-16 gs-reveal">
-                        <h2 class="text-4xl font-serif font-bold mb-2">What Our Guests Say</h2>
-                        <p class="text-brandLight">Trusted by thousands of food lovers.</p>
+        <!-- Events & Catering -->
+        <section id="events" class="py-16 sm:py-20 md:py-24 bg-white border-t border-gray-100">
+            <div class="container mx-auto px-5 sm:px-6 md:px-12">
+                <div class="text-center mb-16 gs-reveal">
+                    <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Make Memories</span>
+                    <h2 class="text-4xl font-serif font-bold text-gray-900">Events & Catering</h2>
+                    <p class="text-gray-500 mt-4 max-w-2xl mx-auto">We provide premium catering services for weddings, corporate events, and private house parties.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 gs-reveal">
+                    <div class="bg-surface p-8 rounded-3xl shadow-sm text-center border border-gray-100 hover:border-brand transition-colors">
+                        <i class="ph-duotone ph-confetti text-5xl text-brand mb-4"></i>
+                        <h4 class="font-bold text-lg mb-2">Weddings & Anniversaries</h4>
+                        <p class="text-sm text-gray-500">Complete luxury dining setup.</p>
                     </div>
-
-                    <div class="swiper reviewSwiper gs-reveal">
-                        <div class="swiper-wrapper">
-                            <div class="swiper-slide">
-                                <div class="glass-dark p-8 rounded-3xl text-left border-white/10 h-full flex flex-col">
-                                    <div class="flex text-gold mb-4 text-sm"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
-                                    <p class="text-gray-200 mb-6 font-light italic flex-1">"Absolutely phenomenal! The Kosha Mangsho was perfectly cooked, and the ambience felt luxurious yet welcoming. Best Bengali restaurant in the city."</p>
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-full bg-brandLight/20 flex items-center justify-center font-bold">R</div>
-                                        <div><h4 class="font-bold">Rahul Mukherjee</h4><p class="text-xs text-gray-400">Local Guide</p></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="swiper-slide">
-                                <div class="glass-dark p-8 rounded-3xl text-left border-white/10 h-full flex flex-col">
-                                    <div class="flex text-gold mb-4 text-sm"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
-                                    <p class="text-gray-200 mb-6 font-light italic flex-1">"Ordered catering for my daughter's wedding. The team was highly professional and the food quality was top-notch Michelin style."</p>
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-full bg-brandLight/20 flex items-center justify-center font-bold">S</div>
-                                        <div><h4 class="font-bold">Sneha Das</h4><p class="text-xs text-gray-400">Event Host</p></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="swiper-slide">
-                                <div class="glass-dark p-8 rounded-3xl text-left border-white/10 h-full flex flex-col">
-                                    <div class="flex text-gold mb-4 text-sm"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i></div>
-                                    <p class="text-gray-200 mb-6 font-light italic flex-1">"The packaging for delivery is incredibly premium. Food stays hot, and the taste is authentically Bengali but presented modernly."</p>
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-full bg-brandLight/20 flex items-center justify-center font-bold">A</div>
-                                        <div><h4 class="font-bold">Anirban Roy</h4><p class="text-xs text-gray-400">Food Blogger</p></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="swiper-pagination"></div>
+                    <div class="bg-surface p-8 rounded-3xl shadow-sm text-center border border-gray-100 hover:border-brand transition-colors">
+                        <i class="ph-duotone ph-buildings text-5xl text-brand mb-4"></i>
+                        <h4 class="font-bold text-lg mb-2">Corporate Events</h4>
+                        <p class="text-sm text-gray-500">Professional buffets and boxed meals.</p>
+                    </div>
+                    <div class="bg-surface p-8 rounded-3xl shadow-sm text-center border border-gray-100 hover:border-brand transition-colors">
+                        <i class="ph-duotone ph-house-line text-5xl text-brand mb-4"></i>
+                        <h4 class="font-bold text-lg mb-2">Private House Parties</h4>
+                        <p class="text-sm text-gray-500">Intimate gatherings with live counters.</p>
                     </div>
                 </div>
-            </section>
 
-            <!-- Contact Section -->
-            <section id="contact" class="py-16 sm:py-20 md:py-24 bg-surface">
-                <div class="container mx-auto px-5 sm:px-6 md:px-12">
-                    <div class="grid lg:grid-cols-2 gap-12 bg-white rounded-[40px] shadow-xl overflow-hidden gs-reveal">
-                        <!-- Info -->
-                        <div class="p-6 sm:p-10 md:p-14 flex flex-col justify-center">
-                            <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Get in Touch</span>
-                            <h2 class="text-4xl font-serif font-bold text-gray-900 mb-8">Contact Us</h2>
-                            
-                            <div class="space-y-6 mb-8">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 bg-brandLight text-brand rounded-full flex items-center justify-center text-xl shrink-0"><i class="ph-fill ph-map-pin"></i></div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">Location</h4>
-                                        <p class="text-gray-500 text-sm">Bipin Paul Rd, Shyamaprasad Nagar, Nimta, West Bengal 700049</p>
-                                    </div>
+                <div class="max-w-3xl mx-auto bg-surface p-8 md:p-12 rounded-3xl shadow-md border border-gray-100 gs-reveal">
+                    <form id="catering-form" onsubmit="handleCatering(event)" class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <input type="text" id="cat-name" placeholder="Your Name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
+                            <input type="tel" id="cat-phone" placeholder="Phone Number" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
+                            <input type="text" id="cat-event" placeholder="Event Type (e.g. Birthday)" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
+                            <input type="number" id="cat-guests" placeholder="Expected Guests" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand">
+                            <input type="text" id="cat-budget" placeholder="Approx. Budget (₹)" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand md:col-span-2">
+                        </div>
+                        <textarea id="cat-req" placeholder="Specific Requirements / Menu Preferences" rows="3" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none focus:border-brand"></textarea>
+                        <button type="submit" class="w-full py-4 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors shadow-lg shadow-brand/30 flex items-center justify-center gap-2">
+                            Send Enquiry to WhatsApp <i class="ph ph-whatsapp-logo text-xl"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reviews Section -->
+        <section class="py-16 sm:py-20 md:py-24 bg-brand text-white relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+            <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10">
+                <div class="text-center mb-16 gs-reveal">
+                    <h2 class="text-4xl font-serif font-bold mb-2">What Our Guests Say</h2>
+                    <p class="text-brandLight">Trusted by thousands of food lovers.</p>
+                </div>
+
+                <div class="swiper reviewSwiper gs-reveal">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <div class="glass-dark p-8 rounded-3xl text-left border-white/10 h-full flex flex-col">
+                                <div class="flex text-gold mb-4 text-sm"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
+                                <p class="text-gray-200 mb-6 font-light italic flex-1">"Absolutely phenomenal! The Kosha Mangsho was perfectly cooked, and the ambience felt luxurious yet welcoming. Best Bengali restaurant in the city."</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-brandLight/20 flex items-center justify-center font-bold">R</div>
+                                    <div><h4 class="font-bold">Rahul Mukherjee</h4><p class="text-xs text-gray-400">Local Guide</p></div>
                                 </div>
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 bg-brandLight text-brand rounded-full flex items-center justify-center text-xl shrink-0"><i class="ph-fill ph-phone"></i></div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">Phone</h4>
-                                        <p class="text-gray-500 text-sm">+91 82820 16187</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 bg-brandLight text-brand rounded-full flex items-center justify-center text-xl shrink-0"><i class="ph-fill ph-clock"></i></div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">Hours</h4>
-                                        <p class="text-gray-500 text-sm">Mon - Sun: 09:00 AM - 11:30 PM</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex gap-4">
-                                <button onclick="window.open('https://www.google.com/maps/place/Kolkata+Bites/@22.6725501,88.403752,17z/data=!3m1!4b1!4m6!3m5!1s0x39f89f00239e9961:0x292a3fe6b295d1cd!8m2!3d22.6725501!4d88.4063269!16s%2Fg%2F11zj2_bg_8', '_blank')" class="px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-brand transition-colors">Get Directions</button>
-                                <button onclick="window.open('tel:+918282016187', '_self')" class="px-6 py-3 border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:border-brand hover:text-brand transition-colors">Call Now</button>
                             </div>
                         </div>
-                        
-                        <!-- Live Google Map -->
-                        <div class="h-[320px] md:h-[400px] lg:h-auto bg-gray-200 relative">
-                            <iframe
+                        <div class="swiper-slide">
+                            <div class="glass-dark p-8 rounded-3xl text-left border-white/10 h-full flex flex-col">
+                                <div class="flex text-gold mb-4 text-sm"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
+                                <p class="text-gray-200 mb-6 font-light italic flex-1">"Ordered catering for my daughter's wedding. The team was highly professional and the food quality was top-notch Michelin style."</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-brandLight/20 flex items-center justify-center font-bold">S</div>
+                                    <div><h4 class="font-bold">Sneha Das</h4><p class="text-xs text-gray-400">Event Host</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="swiper-slide">
+                            <div class="glass-dark p-8 rounded-3xl text-left border-white/10 h-full flex flex-col">
+                                <div class="flex text-gold mb-4 text-sm"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i></div>
+                                <p class="text-gray-200 mb-6 font-light italic flex-1">"The packaging for delivery is incredibly premium. Food stays hot, and the taste is authentically Bengali but presented modernly."</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-brandLight/20 flex items-center justify-center font-bold">A</div>
+                                    <div><h4 class="font-bold">Anirban Roy</h4><p class="text-xs text-gray-400">Food Blogger</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="swiper-pagination"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-16 sm:py-20 md:py-24 bg-surface">
+            <div class="container mx-auto px-5 sm:px-6 md:px-12">
+                <div class="grid lg:grid-cols-2 gap-12 bg-white rounded-[40px] shadow-xl overflow-hidden gs-reveal">
+                    <!-- Info -->
+                    <div class="p-6 sm:p-10 md:p-14 flex flex-col justify-center">
+                        <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Get in Touch</span>
+                        <h2 class="text-4xl font-serif font-bold text-gray-900 mb-8">Contact Us</h2>
+
+                        <div class="space-y-6 mb-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-brandLight text-brand rounded-full flex items-center justify-center text-xl shrink-0"><i class="ph-fill ph-map-pin"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900">Location</h4>
+                                    <p class="text-gray-500 text-sm">Bipin Paul Rd, Shyamaprasad Nagar, Nimta, West Bengal 700049</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-brandLight text-brand rounded-full flex items-center justify-center text-xl shrink-0"><i class="ph-fill ph-phone"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900">Phone</h4>
+                                    <p class="text-gray-500 text-sm">+91 82820 16187</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-brandLight text-brand rounded-full flex items-center justify-center text-xl shrink-0"><i class="ph-fill ph-clock"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900">Hours</h4>
+                                    <p class="text-gray-500 text-sm">Mon - Sun: 09:00 AM - 11:30 PM</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button onclick="window.open('https://www.google.com/maps/place/Kolkata+Bites/@22.6725501,88.403752,17z/data=!3m1!4b1!4m6!3m5!1s0x39f89f00239e9961:0x292a3fe6b295d1cd!8m2!3d22.6725501!4d88.4063269!16s%2Fg%2F11zj2_bg_8', '_blank')" class="px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-brand transition-colors">Get Directions</button>
+                            <button onclick="window.open('tel:+918282016187', '_self')" class="px-6 py-3 border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:border-brand hover:text-brand transition-colors">Call Now</button>
+                        </div>
+                    </div>
+
+                    <!-- Live Google Map -->
+                    <div class="h-[320px] md:h-[400px] lg:h-auto bg-gray-200 relative">
+                        <iframe
                                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3681.496602854768!2d88.40375197665072!3d22.672550079420777!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39f89f00239e9961%3A0x292a3fe6b295d1cd!2sKolkata%20Bites!5e0!3m2!1sen!2sin!4v1782647402388!5m2!1sen!2sin"
                                 class="absolute inset-0 w-full h-full border-0"
                                 loading="lazy"
                                 referrerpolicy="no-referrer-when-downgrade"
                                 title="Kolkata Bites location on Google Maps">
-                            </iframe>
-                        </div>
+                        </iframe>
                     </div>
                 </div>
-            </section>
-        </div>
+            </div>
+        </section>
+    </div>
 
-    </main>
+</main>
 
-    <!-- Footer Section -->
-    <footer class="bg-[#0A110D] text-white pt-20 pb-10 border-t-4 border-brand">
-        <div class="container mx-auto px-5 sm:px-6 md:px-12">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                <div>
-                    <div class="flex items-center gap-2 mb-6">
-                        <div class="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-white"><i class="ph ph-leaf text-xl"></i></div>
-                        <span class="font-serif text-2xl font-bold text-white">Kolkata Bites</span>
-                    </div>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">Experience the true essence of premium Bengali cuisine. Fresh ingredients, masterful recipes, delivered with warmth.</p>
-                    <div class="flex gap-4">
-                        <a href="https://www.instagram.com/thekolkatabites" target="_blank" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand transition-colors"><i class="ph-fill ph-instagram-logo"></i></a>
-                        <a href="http://facebook.com/kolkatabites/" target="_blank" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand transition-colors"><i class="ph-fill ph-facebook-logo"></i></a>
-                    </div>
+<!-- Footer Section -->
+<footer class="bg-[#0A110D] text-white pt-20 pb-10 border-t-4 border-brand">
+    <div class="container mx-auto px-5 sm:px-6 md:px-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+            <div>
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-white"><i class="ph ph-leaf text-xl"></i></div>
+                    <span class="font-serif text-2xl font-bold text-white">Kolkata Bites</span>
                 </div>
-
-                <div>
-                    <h4 class="font-serif font-bold text-lg mb-6">Quick Links</h4>
-                    <ul class="space-y-3 text-gray-400 text-sm">
-                        <li><a href="#" onclick="navigateSPA('home'); setTimeout(()=>window.scrollTo(0,0),100)" class="hover:text-brand transition-colors">Home</a></li>
-                        <li><a href="menu.html" class="hover:text-brand transition-colors">Our Menu</a></li>
-                        <li><a href="#reservation" class="hover:text-brand transition-colors">Book a Table</a></li>
-                        <li><a href="#events" class="hover:text-brand transition-colors">Catering</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-serif font-bold text-lg mb-6">Contact Us</h4>
-                    <ul class="space-y-4 text-gray-400 text-sm">
-                        <li class="flex items-start gap-3"><i class="ph-fill ph-map-pin text-brand mt-1"></i><span>Bipin Paul Rd, Shyamaprasad Nagar,<br>Nimta, West Bengal 700049</span></li>
-                        <li class="flex items-center gap-3"><i class="ph-fill ph-phone text-brand"></i><span>+91 82820 16187</span></li>
-                        <li class="flex items-center gap-3"><i class="ph-fill ph-envelope text-brand"></i><span>hello@kolkatabites.com</span></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-serif font-bold text-lg mb-6">Business Hours</h4>
-                    <ul class="space-y-3 text-gray-400 text-sm">
-                        <li class="flex justify-between border-b border-white/10 pb-2"><span>Mon - Fri</span> <span>09:00 AM - 11:30 PM</span></li>
-                        <li class="flex justify-between border-b border-white/10 pb-2"><span>Saturday</span> <span>09:00 AM - 11:30 PM</span></li>
-                        <li class="flex justify-between border-b border-white/10 pb-2"><span>Sunday</span> <span>09:00 AM - 11:30 PM</span></li>
-                    </ul>
+                <p class="text-gray-400 text-sm leading-relaxed mb-6">Experience the true essence of premium Bengali cuisine. Fresh ingredients, masterful recipes, delivered with warmth.</p>
+                <div class="flex gap-4">
+                    <a href="https://www.instagram.com/thekolkatabites" target="_blank" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand transition-colors"><i class="ph-fill ph-instagram-logo"></i></a>
+                    <a href="http://facebook.com/kolkatabites/" target="_blank" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand transition-colors"><i class="ph-fill ph-facebook-logo"></i></a>
                 </div>
             </div>
 
-            <div class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-gray-500 text-xs">
-                <p>&copy; 2026 Kolkata Bites. All rights reserved.</p>
-                <div class="flex gap-4 mt-4 md:mt-0">
-                    <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-                    <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-                </div>
+            <div>
+                <h4 class="font-serif font-bold text-lg mb-6">Quick Links</h4>
+                <ul class="space-y-3 text-gray-400 text-sm">
+                    <li><a href="#" onclick="navigateSPA('home'); setTimeout(()=>window.scrollTo(0,0),100)" class="hover:text-brand transition-colors">Home</a></li>
+                    <li><a href="menu.html" class="hover:text-brand transition-colors">Our Menu</a></li>
+                    <li><a href="#reservation" class="hover:text-brand transition-colors">Book a Table</a></li>
+                    <li><a href="#events" class="hover:text-brand transition-colors">Catering</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-serif font-bold text-lg mb-6">Contact Us</h4>
+                <ul class="space-y-4 text-gray-400 text-sm">
+                    <li class="flex items-start gap-3"><i class="ph-fill ph-map-pin text-brand mt-1"></i><span>Bipin Paul Rd, Shyamaprasad Nagar,<br>Nimta, West Bengal 700049</span></li>
+                    <li class="flex items-center gap-3"><i class="ph-fill ph-phone text-brand"></i><span>+91 82820 16187</span></li>
+                    <li class="flex items-center gap-3"><i class="ph-fill ph-envelope text-brand"></i><span>hello@kolkatabites.com</span></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-serif font-bold text-lg mb-6">Business Hours</h4>
+                <ul class="space-y-3 text-gray-400 text-sm">
+                    <li class="flex justify-between border-b border-white/10 pb-2"><span>Mon - Fri</span> <span>09:00 AM - 11:30 PM</span></li>
+                    <li class="flex justify-between border-b border-white/10 pb-2"><span>Saturday</span> <span>09:00 AM - 11:30 PM</span></li>
+                    <li class="flex justify-between border-b border-white/10 pb-2"><span>Sunday</span> <span>09:00 AM - 11:30 PM</span></li>
+                </ul>
             </div>
         </div>
-    </footer>
 
-    <!-- Floating WhatsApp Assistant -->
-    <button onclick="window.open('https://wa.me/918282016187?text=Hello%20Kolkata%20Bites,%20I%20need%20some%20help.', '_blank')" class="fixed bottom-[84px] right-4 lg:bottom-6 lg:right-6 z-[90] group flex items-center">
-        <div class="mr-4 bg-white px-4 py-2 rounded-xl shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-4 group-hover:translate-x-0 duration-300 hidden md:block text-sm font-medium text-gray-700 whitespace-nowrap">
-            Need Help? Chat With Kolkata Bites
+        <div class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-gray-500 text-xs">
+            <p>&copy; 2026 Kolkata Bites. All rights reserved.</p>
+            <div class="flex gap-4 mt-4 md:mt-0">
+                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
+            </div>
         </div>
-        <div class="relative w-12 h-12 sm:w-14 sm:h-14 bg-brand rounded-full flex items-center justify-center text-white shadow-[0_10px_30px_rgba(30,125,58,0.5)] transform hover:scale-110 transition-transform">
-            <div class="absolute inset-0 rounded-full pulse-ring"></div>
-            <i class="ph-fill ph-whatsapp-logo text-2xl sm:text-3xl z-10 relative"></i>
-            <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white z-20"></div>
-        </div>
-    </button>
+    </div>
+</footer>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+<!-- Floating WhatsApp Assistant -->
+<button onclick="window.open('https://wa.me/918282016187?text=Hello%20Kolkata%20Bites,%20I%20need%20some%20help.', '_blank')" class="fixed bottom-[84px] right-4 lg:bottom-6 lg:right-6 z-[90] group flex items-center">
+    <div class="mr-4 bg-white px-4 py-2 rounded-xl shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-4 group-hover:translate-x-0 duration-300 hidden md:block text-sm font-medium text-gray-700 whitespace-nowrap">
+        Need Help? Chat With Kolkata Bites
+    </div>
+    <div class="relative w-12 h-12 sm:w-14 sm:h-14 bg-brand rounded-full flex items-center justify-center text-white shadow-[0_10px_30px_rgba(30,125,58,0.5)] transform hover:scale-110 transition-transform">
+        <div class="absolute inset-0 rounded-full pulse-ring"></div>
+        <i class="ph-fill ph-whatsapp-logo text-2xl sm:text-3xl z-10 relative"></i>
+        <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white z-20"></div>
+    </div>
+</button>
 
-    <script>
-        const WA_NUMBER = "918282016187";
-        const CART_STORAGE_KEY = "kolkataBitesCart";
-        let cart = loadCart();
-        let currentView = 'home';
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
 
-        function loadCart() {
-            try {
-                const raw = localStorage.getItem(CART_STORAGE_KEY);
-                return raw ? JSON.parse(raw) : [];
-            } catch (e) {
-                return [];
+<script>
+    const WA_NUMBER = "918282016187";
+    const CART_STORAGE_KEY = "kolkataBitesCart";
+    let cart = loadCart();
+    let currentView = 'home';
+
+    function loadCart() {
+        try {
+            const raw = localStorage.getItem(CART_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveCart() {
+        try {
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+        } catch (e) { /* storage unavailable, fail silently */ }
+    }
+
+    /* =========================================================
+       GOOGLE SHEET → HOMEPAGE DATA (Best Sellers + Dish of the Month)
+       Same workbook as menu.html, different tabs (gid) inside it.
+    ========================================================= */
+    // Reuse the published CSV base from menu.html's sheet. Since "publish to web"
+    // links are per-sheet-tab, set one CSV URL per tab below (swap in your real links).
+    const BEST_SELLERS_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=1662616695&single=true&output=csv`;
+    const DISH_OF_MONTH_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=2003816239&single=true&output=csv`;
+    // If you're using the gviz endpoint instead (no "publish to web" needed, sheet must be
+    // shared as "Anyone with the link can view"), use this pattern per tab instead:
+    const IMAGE_BASE_URL = "images/";
+
+    // Fallback data shown only if a sheet tab can't be reached (offline demo / first-time setup)
+    const FALLBACK_BEST_SELLERS = [
+        { id: 'f1', name: 'Authentic Chicken Biryani', desc: 'Aromatic basmati rice cooked with tender chicken and secret spices.', price: 250, offer: 220, isVeg: false, rating: 4.8, img: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=600&auto=format&fit=crop' },
+        { id: 'f2', name: 'Bengali Fish Curry', desc: 'Traditional Rui Maach (Rohu Fish) in a mustard and tomato gravy.', price: 180, offer: null, isVeg: false, rating: 4.7, img: 'https://images.unsplash.com/photo-1627000845348-18e3ec4d6ce2?q=80&w=600&auto=format&fit=crop' },
+        { id: 'f3', name: 'Paneer Butter Masala', desc: 'Soft cottage cheese cubes in a creamy, rich tomato gravy.', price: 220, offer: null, isVeg: true, rating: 4.6, img: 'https://images.unsplash.com/photo-1552590635-27c2c2128abf?q=80&w=600&auto=format&fit=crop' },
+        { id: 'f4', name: 'Mutton Dakbungalow', desc: 'Heritage recipe with slow-cooked mutton, egg, and potato.', price: 350, offer: 320, isVeg: false, rating: 4.9, img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?q=80&w=600&auto=format&fit=crop' }
+    ];
+    const FALLBACK_DISH_OF_MONTH = {
+        id: 'c1', name: 'Kosha Mangsho & Pulao',
+        desc: 'This recipe has been passed down through generations. Slow-cooked mutton in rich, aromatic spices, served with sweet and fragrant yellow rice. It is not just food; it is an emotion on a plate.',
+        price: 550, offer: 450, isVeg: false,
+        img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=500&q=80',
+        featureImg: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?q=80&w=800&auto=format&fit=crop',
+        overlayTitle: 'Limited Time Only',
+        overlaySubtitle: 'Featured this month'
+    };
+
+    let foodItems = FALLBACK_BEST_SELLERS;
+
+    // Same robust CSV parser used on menu.html (handles quoted fields with commas/newlines)
+    function parseCSV(text) {
+        const rows = [];
+        let row = [], field = '', inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            const c = text[i], next = text[i + 1];
+            if (inQuotes) {
+                if (c === '"' && next === '"') { field += '"'; i++; }
+                else if (c === '"') { inQuotes = false; }
+                else { field += c; }
+            } else {
+                if (c === '"') inQuotes = true;
+                else if (c === ',') { row.push(field); field = ''; }
+                else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                else if (c === '\r') { /* skip */ }
+                else { field += c; }
             }
         }
+        if (field.length || row.length) { row.push(field); rows.push(row); }
+        return rows.filter(r => r.some(cell => cell.trim() !== ''));
+    }
 
-        function saveCart() {
-            try {
-                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-            } catch (e) { /* storage unavailable, fail silently */ }
-        }
+    function resolveImg(imageFile, fallbackName) {
+        if (!imageFile) return `https://placehold.co/600x400/E8F3EB/1E7D3A?text=${encodeURIComponent(fallbackName)}`;
+        return imageFile.startsWith('http') ? imageFile : IMAGE_BASE_URL + imageFile;
+    }
 
-        /* =========================================================
-           GOOGLE SHEET → HOMEPAGE DATA (Best Sellers + Chef's Signature)
-           Same workbook as menu.html, different tabs (gid) inside it.
-        ========================================================= */
-        // Reuse the published CSV base from menu.html's sheet. Since "publish to web"
-        // links are per-sheet-tab, set one CSV URL per tab below (swap in your real links).
-        const BEST_SELLERS_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=1662616695&single=true&output=csv`;
-        const CHEF_SPECIAL_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=2003816239&single=true&output=csv`;
-        // If you're using the gviz endpoint instead (no "publish to web" needed, sheet must be
-        // shared as "Anyone with the link can view"), use this pattern per tab instead:
-        // const SHEET_ID = "1A2B3C_REPLACE_WITH_YOUR_SHEET_ID";
-        // const BEST_SELLERS_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=BEST_SELLERS_GID`;
-        // const CHEF_SPECIAL_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=CHEF_SPECIAL_GID`;
-        const IMAGE_BASE_URL = "images/";
-
-        // Fallback data shown only if a sheet tab can't be reached (offline demo / first-time setup)
-        const FALLBACK_BEST_SELLERS = [
-            { id: 'f1', name: 'Authentic Chicken Biryani', desc: 'Aromatic basmati rice cooked with tender chicken and secret spices.', price: 250, offer: 220, isVeg: false, rating: 4.8, img: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=600&auto=format&fit=crop' },
-            { id: 'f2', name: 'Bengali Fish Curry', desc: 'Traditional Rui Maach (Rohu Fish) in a mustard and tomato gravy.', price: 180, offer: null, isVeg: false, rating: 4.7, img: 'https://images.unsplash.com/photo-1627000845348-18e3ec4d6ce2?q=80&w=600&auto=format&fit=crop' },
-            { id: 'f3', name: 'Paneer Butter Masala', desc: 'Soft cottage cheese cubes in a creamy, rich tomato gravy.', price: 220, offer: null, isVeg: true, rating: 4.6, img: 'https://images.unsplash.com/photo-1552590635-27c2c2128abf?q=80&w=600&auto=format&fit=crop' },
-            { id: 'f4', name: 'Mutton Dakbungalow', desc: 'Heritage recipe with slow-cooked mutton, egg, and potato.', price: 350, offer: 320, isVeg: false, rating: 4.9, img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?q=80&w=600&auto=format&fit=crop' }
-        ];
-        const FALLBACK_CHEF_SPECIAL = {
-            id: 'c1', name: 'Kosha Mangsho & Pulao', chefName: 'Chef Arindam', chefTitle: 'Executive Head Chef',
-            desc: '"This recipe has been passed down through generations in my family. Slow-cooked mutton in rich, aromatic spices, served with sweet and fragrant yellow rice. It is not just food; it is an emotion on a plate."',
-            price: 550, offer: 450, isVeg: false,
-            img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=500&q=80',
-            chefImg: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=800&auto=format&fit=crop'
-        };
-
-        let foodItems = FALLBACK_BEST_SELLERS;
-
-        // Same robust CSV parser used on menu.html (handles quoted fields with commas/newlines)
-        function parseCSV(text) {
-            const rows = [];
-            let row = [], field = '', inQuotes = false;
-            for (let i = 0; i < text.length; i++) {
-                const c = text[i], next = text[i + 1];
-                if (inQuotes) {
-                    if (c === '"' && next === '"') { field += '"'; i++; }
-                    else if (c === '"') { inQuotes = false; }
-                    else { field += c; }
-                } else {
-                    if (c === '"') inQuotes = true;
-                    else if (c === ',') { row.push(field); field = ''; }
-                    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
-                    else if (c === '\r') { /* skip */ }
-                    else { field += c; }
-                }
-            }
-            if (field.length || row.length) { row.push(field); rows.push(row); }
-            return rows.filter(r => r.some(cell => cell.trim() !== ''));
-        }
-
-        function resolveImg(imageFile, fallbackName) {
-            if (!imageFile) return `https://placehold.co/600x400/E8F3EB/1E7D3A?text=${encodeURIComponent(fallbackName)}`;
-            return imageFile.startsWith('http') ? imageFile : IMAGE_BASE_URL + imageFile;
-        }
-
-        // Expected headers (case-insensitive) for the Best Sellers tab:
-        // name | price | offer_price | image | is_veg | rating | description
-        function parseBestSellersCSV(csvText) {
-            const rows = parseCSV(csvText);
-            if (!rows.length) return [];
-            const headers = rows[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
-            return rows.slice(1).map((cols, idx) => {
-                const get = (key) => { const i = headers.indexOf(key); return i > -1 ? (cols[i] || '').trim() : ''; };
-                const name = get('name') || get('food_name') || get('item_name');
-                if (!name) return null;
-                const price = parseFloat(get('price')) || 0;
-                const offerRaw = get('offer_price') || get('offer');
-                const offer = offerRaw ? parseFloat(offerRaw) : null;
-                return {
-                    id: 'bs-' + idx,
-                    name,
-                    desc: get('description') || get('desc'),
-                    price,
-                    offer: (offer && offer < price) ? offer : null,
-                    isVeg: ['yes', 'true', 'veg', '1'].includes((get('is_veg') || get('veg')).toLowerCase()),
-                    rating: parseFloat(get('rating')) || 4.5,
-                    img: resolveImg(get('image') || get('image_file_name'), name)
-                };
-            }).filter(Boolean);
-        }
-
-        // Expected headers (case-insensitive) for the Chef's Signature tab — one row is enough,
-        // first row is used. Headers: name | chef_name | chef_title | price | offer_price |
-        // image | chef_image | is_veg | description
-        function parseChefSpecialCSV(csvText) {
-            const rows = parseCSV(csvText);
-            if (rows.length < 2) return null;
-            const headers = rows[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
-            const cols = rows[1];
+    // Expected headers (case-insensitive) for the Best Sellers tab:
+    // name | price | offer_price | image | is_veg | rating | description
+    function parseBestSellersCSV(csvText) {
+        const rows = parseCSV(csvText);
+        if (!rows.length) return [];
+        const headers = rows[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+        return rows.slice(1).map((cols, idx) => {
             const get = (key) => { const i = headers.indexOf(key); return i > -1 ? (cols[i] || '').trim() : ''; };
-            const name = get('name') || get('dish_name');
+            const name = get('name') || get('food_name') || get('item_name');
             if (!name) return null;
             const price = parseFloat(get('price')) || 0;
             const offerRaw = get('offer_price') || get('offer');
             const offer = offerRaw ? parseFloat(offerRaw) : null;
             return {
-                id: 'chef-special',
+                id: 'bs-' + idx,
                 name,
-                chefName: get('chef_name') || 'Chef Arindam',
-                chefTitle: get('chef_title') || 'Executive Head Chef',
                 desc: get('description') || get('desc'),
-                price, offer: (offer && offer < price) ? offer : null,
+                price,
+                offer: (offer && offer < price) ? offer : null,
                 isVeg: ['yes', 'true', 'veg', '1'].includes((get('is_veg') || get('veg')).toLowerCase()),
-                img: resolveImg(get('image'), name),
-                chefImg: resolveImg(get('chef_image'), get('chef_name') || 'chef')
+                rating: parseFloat(get('rating')) || 4.5,
+                img: resolveImg(get('image') || get('image_file_name'), name)
             };
+        }).filter(Boolean);
+    }
+
+    // Expected headers (case-insensitive) for the "Dish of the Month" tab — only the
+    // first data row is used (one dish at a time). Column names:
+    //   dish_name      -> dish name (required)
+    //   description    -> short description shown under the name
+    //   price          -> original price (number, no currency symbol)
+    //   offer_price    -> discounted price (optional; leave blank if no discount)
+    //   image          -> image filename (placed in /images) or a full https:// URL
+    //   is_veg         -> "yes" or "no"
+    //   overlay_title  -> small bold heading shown on the photo (e.g. "Limited Time Only")
+    //   overlay_subtitle -> small line under the heading (e.g. "Featured this month")
+    function parseDishOfMonthCSV(csvText) {
+        const rows = parseCSV(csvText);
+        if (rows.length < 2) return null;
+        const headers = rows[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+        const cols = rows[1];
+        const get = (key) => { const i = headers.indexOf(key); return i > -1 ? (cols[i] || '').trim() : ''; };
+        const name = get('dish_name') || get('name');
+        if (!name) return null;
+        const price = parseFloat(get('price')) || 0;
+        const offerRaw = get('offer_price') || get('offer');
+        const offer = offerRaw ? parseFloat(offerRaw) : null;
+        const img = resolveImg(get('image'), name);
+        return {
+            id: 'dish-of-month',
+            name,
+            desc: get('description') || get('desc'),
+            price, offer: (offer && offer < price) ? offer : null,
+            isVeg: ['yes', 'true', 'veg', '1'].includes((get('is_veg') || get('veg')).toLowerCase()),
+            img,
+            featureImg: img,
+            overlayTitle: get('overlay_title') || 'Limited Time Only',
+            overlaySubtitle: get('overlay_subtitle') || 'Featured this month'
+        };
+    }
+
+    async function loadBestSellers() {
+        try {
+            const res = await fetch(BEST_SELLERS_CSV_URL);
+            if (!res.ok) throw new Error('Network response was not ok');
+            const items = parseBestSellersCSV(await res.text());
+            if (!items.length) throw new Error('No rows parsed');
+            foodItems = items;
+        } catch (err) {
+            console.error('Best Sellers sheet load failed, using fallback data:', err);
+            foodItems = FALLBACK_BEST_SELLERS;
         }
+        renderFoodGrid();
+    }
 
-        async function loadBestSellers() {
-            try {
-                const res = await fetch(BEST_SELLERS_CSV_URL);
-                if (!res.ok) throw new Error('Network response was not ok');
-                const items = parseBestSellersCSV(await res.text());
-                if (!items.length) throw new Error('No rows parsed');
-                foodItems = items;
-            } catch (err) {
-                console.error('Best Sellers sheet load failed, using fallback data:', err);
-                foodItems = FALLBACK_BEST_SELLERS;
-            }
-            renderFoodGrid();
+    async function loadDishOfMonth() {
+        let dish = FALLBACK_DISH_OF_MONTH;
+        try {
+            const res = await fetch(DISH_OF_MONTH_CSV_URL);
+            if (!res.ok) throw new Error('Network response was not ok');
+            const parsed = parseDishOfMonthCSV(await res.text());
+            if (!parsed) throw new Error('No rows parsed');
+            dish = parsed;
+        } catch (err) {
+            console.error("Dish of the Month sheet load failed, using fallback data:", err);
         }
+        renderDishOfMonth(dish);
+    }
 
-        async function loadChefSpecial() {
-            let dish = FALLBACK_CHEF_SPECIAL;
-            try {
-                const res = await fetch(CHEF_SPECIAL_CSV_URL);
-                if (!res.ok) throw new Error('Network response was not ok');
-                const parsed = parseChefSpecialCSV(await res.text());
-                if (!parsed) throw new Error('No rows parsed');
-                dish = parsed;
-            } catch (err) {
-                console.error("Chef's Signature sheet load failed, using fallback data:", err);
-            }
-            renderChefSpecial(dish);
+    function renderDishOfMonth(dish) {
+        const finalPrice = dish.offer || dish.price;
+        document.getElementById('dish-of-month-img').src = dish.featureImg || dish.img;
+        document.getElementById('dish-of-month-name').textContent = dish.name;
+        document.getElementById('dish-of-month-desc').textContent = dish.desc;
+        document.getElementById('dish-of-month-price').textContent = `₹${finalPrice}`;
+        document.getElementById('dish-of-month-overlay-title').textContent = dish.overlayTitle || 'Limited Time Only';
+        document.getElementById('dish-of-month-overlay-subtitle').textContent = dish.overlaySubtitle || 'Featured this month';
+        const strikeEl = document.getElementById('dish-of-month-strike');
+        if (dish.offer) {
+            strikeEl.textContent = `₹${dish.price}`;
+            strikeEl.classList.remove('hidden');
+        } else {
+            strikeEl.classList.add('hidden');
         }
+        const btn = document.getElementById('dish-of-month-add-btn');
+        const cartItem = { id: dish.id, name: dish.name, price: finalPrice, offer: null, isVeg: dish.isVeg, img: dish.img };
+        // Use a JS closure instead of building an onclick="..." string — dish names can
+        // contain characters like & ' " that break HTML attribute parsing if interpolated directly.
+        btn.onclick = () => addToCart(cartItem);
+    }
 
-        function renderChefSpecial(dish) {
-            const finalPrice = dish.offer || dish.price;
-            document.getElementById('chef-special-img').src = dish.chefImg;
-            document.getElementById('chef-special-name').textContent = dish.name;
-            document.getElementById('chef-special-desc').textContent = dish.desc;
-            document.getElementById('chef-special-price').textContent = `₹${finalPrice}`;
-            const strikeEl = document.getElementById('chef-special-strike');
-            if (dish.offer) {
-                strikeEl.textContent = `₹${dish.price}`;
-                strikeEl.classList.remove('hidden');
-            } else {
-                strikeEl.classList.add('hidden');
-            }
-            const btn = document.getElementById('chef-special-add-btn');
-            const cartItem = { id: dish.id, name: dish.name, price: finalPrice, offer: null, isVeg: dish.isVeg, img: dish.img };
-            // Use a JS closure instead of building an onclick="..." string — dish names can
-            // contain characters like & ' " that break HTML attribute parsing if interpolated directly.
-            btn.onclick = () => addToCart(cartItem);
-        }
+    // Initialization
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const loader = document.getElementById('page-loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 600);
+        }, 1000);
 
-        // Initialization
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const loader = document.getElementById('page-loader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 600);
-            }, 1000);
+        loadBestSellers();
+        loadDishOfMonth();
+        initAnimations();
+        updateCartUI();
+        initBottomNavScrollSync();
+    });
 
-            loadBestSellers();
-            loadChefSpecial();
-            initAnimations();
-            updateCartUI();
-            initBottomNavScrollSync();
-        });
+    // Measures the typing-text span's own rendered text width (at its current
+    // responsive font-size) and feeds that into the typewriter animation, so the
+    // blinking cursor lands right after "Day." instead of at the end of a wider box.
+    function initTypingTextWidth() {
+        const el = document.querySelector('.typing-text');
+        if (!el) return;
+        const setWidth = () => {
+            const clone = el.cloneNode(true);
+            clone.classList.add('typing-text-measure');
+            clone.style.animation = 'none';
+            clone.style.width = 'auto';
+            clone.style.borderRight = 'none';
+            el.parentElement.appendChild(clone);
+            const width = clone.getBoundingClientRect().width;
+            clone.remove();
+            el.style.setProperty('--type-w', width + 'px');
+            el.classList.add('ready');
+        };
+        setWidth();
+        window.addEventListener('resize', setWidth);
+    }
+    document.addEventListener('DOMContentLoaded', initTypingTextWidth);
 
-        // Keep cart in sync if user navigates back from menu.html or another tab
-        window.addEventListener('focus', () => {
-            cart = loadCart();
-            updateCartUI();
-        });
-        window.addEventListener('pageshow', () => {
-            cart = loadCart();
-            updateCartUI();
-        });
+    // Keep cart in sync if user navigates back from menu.html or another tab
+    window.addEventListener('focus', () => {
+        cart = loadCart();
+        updateCartUI();
+    });
+    window.addEventListener('pageshow', () => {
+        cart = loadCart();
+        updateCartUI();
+    });
 
-        // Routing
-        function navigateSPA(viewId) {
-            const views = ['home', 'menu'];
-            views.forEach(v => {
-                const el = document.getElementById(`view-${v}`);
-                if (el) {
-                    if (v === viewId) {
-                        el.classList.remove('hidden');
-                        el.classList.add('block');
-                        el.style.opacity = 0;
-                        setTimeout(() => el.style.opacity = 1, 50);
-                    } else {
-                        el.classList.remove('block');
-                        el.classList.add('hidden');
-                    }
+    // Routing
+    function navigateSPA(viewId) {
+        const views = ['home', 'menu'];
+        views.forEach(v => {
+            const el = document.getElementById(`view-${v}`);
+            if (el) {
+                if (v === viewId) {
+                    el.classList.remove('hidden');
+                    el.classList.add('block');
+                    el.style.opacity = 0;
+                    setTimeout(() => el.style.opacity = 1, 50);
+                } else {
+                    el.classList.remove('block');
+                    el.classList.add('hidden');
                 }
-            });
-            currentView = viewId;
-            window.scrollTo(0, 0);
-        }
+            }
+        });
+        currentView = viewId;
+        window.scrollTo(0, 0);
+    }
 
-        // Bottom Nav Active State
-        function setBottomNavActive(el) {
-            document.querySelectorAll('.bottom-nav-link').forEach(link => {
-                link.classList.remove('text-brand');
-                link.classList.add('text-gray-500');
-                link.removeAttribute('data-active');
-            });
-            el.classList.remove('text-gray-500');
-            el.classList.add('text-brand');
-            el.setAttribute('data-active', 'true');
-        }
+    // Bottom Nav Active State
+    function setBottomNavActive(el) {
+        document.querySelectorAll('.bottom-nav-link').forEach(link => {
+            link.classList.remove('text-brand');
+            link.classList.add('text-gray-500');
+            link.removeAttribute('data-active');
+        });
+        el.classList.remove('text-gray-500');
+        el.classList.add('text-brand');
+        el.setAttribute('data-active', 'true');
+    }
 
-        // Sync bottom nav highlight with scroll position (home view only)
-        function initBottomNavScrollSync() {
-            const sectionMap = [
-                { id: 'hero', href: '#hero' },
-                { id: 'best-sellers', href: '#best-sellers' },
-                { id: 'reservation', href: '#reservation' },
-                { id: 'contact', href: '#contact' }
-            ];
-            window.addEventListener('scroll', () => {
-                if (currentView !== 'home') return;
-                let activeId = 'hero';
-                sectionMap.forEach(s => {
-                    const el = document.getElementById(s.id);
-                    if (el && window.scrollY >= el.offsetTop - 200) activeId = s.id;
-                });
-                const match = sectionMap.find(s => s.id === activeId);
-                if (match) {
-                    const linkEl = document.querySelector(`.bottom-nav-link[href="${match.href}"]`);
-                    if (linkEl) setBottomNavActive(linkEl);
-                }
-            }, { passive: true });
-        }
-
-        // Utils
-        function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast show';
-            toast.innerHTML = `<i class="ph-fill ph-check-circle inline-block mr-2"></i> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // Navbar Scroll
+    // Sync bottom nav highlight with scroll position (home view only)
+    function initBottomNavScrollSync() {
+        const sectionMap = [
+            { id: 'hero', href: '#hero' },
+            { id: 'best-sellers', href: '#best-sellers' },
+            { id: 'reservation', href: '#reservation' },
+            { id: 'contact', href: '#contact' }
+        ];
         window.addEventListener('scroll', () => {
-            const nav = document.getElementById('navbar');
-            const navLinks = document.querySelectorAll('.nav-link');
-            const navText = document.querySelector('.nav-text');
-            if (window.scrollY > 50) {
-                nav.classList.add('bg-white/95', 'backdrop-blur-md', 'shadow-md', 'border-b', 'border-gray-100');
-                nav.classList.remove('bg-transparent', 'border-transparent');
-                navLinks.forEach(l => l.classList.replace('text-white', 'text-gray-800'));
-                navLinks.forEach(l => l.classList.replace('text-gray-100', 'text-gray-800'));
-                navText.classList.replace('text-white', 'text-gray-900');
-            } else {
-                nav.classList.remove('bg-white/95', 'backdrop-blur-md', 'shadow-md', 'border-b', 'border-gray-100');
-                nav.classList.add('bg-transparent', 'border-transparent');
-                navLinks.forEach(l => l.classList.replace('text-gray-800', 'text-gray-100'));
-                navText.classList.replace('text-gray-900', 'text-white');
+            if (currentView !== 'home') return;
+            let activeId = 'hero';
+            sectionMap.forEach(s => {
+                const el = document.getElementById(s.id);
+                if (el && window.scrollY >= el.offsetTop - 200) activeId = s.id;
+            });
+            const match = sectionMap.find(s => s.id === activeId);
+            if (match) {
+                const linkEl = document.querySelector(`.bottom-nav-link[href="${match.href}"]`);
+                if (linkEl) setBottomNavActive(linkEl);
             }
-        });
+        }, { passive: true });
+    }
 
-        function renderFoodGrid() {
-            const grid = document.getElementById('food-grid');
-            if(!grid) return;
-            grid.innerHTML = foodItems.map((item, index) => {
-                const finalPrice = item.offer || item.price;
-                return `
-                <div class="bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl transition-all border border-gray-100 group food-card gs-reveal" data-tilt data-tilt-max="5" data-tilt-speed="400" data-tilt-glare="true" data-tilt-max-glare="0.1" style="transition-delay: ${index * 100}ms">
+    // Utils
+    function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast show';
+        toast.innerHTML = `<i class="ph-fill ph-check-circle inline-block mr-2"></i> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Navbar Scroll
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('navbar');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const navText = document.querySelector('.nav-text');
+        if (window.scrollY > 50) {
+            nav.classList.add('bg-white/95', 'backdrop-blur-md', 'shadow-md', 'border-b', 'border-gray-100');
+            nav.classList.remove('bg-transparent', 'border-transparent');
+            navLinks.forEach(l => l.classList.replace('text-white', 'text-gray-800'));
+            navLinks.forEach(l => l.classList.replace('text-gray-100', 'text-gray-800'));
+            navText.classList.replace('text-white', 'text-gray-900');
+        } else {
+            nav.classList.remove('bg-white/95', 'backdrop-blur-md', 'shadow-md', 'border-b', 'border-gray-100');
+            nav.classList.add('bg-transparent', 'border-transparent');
+            navLinks.forEach(l => l.classList.replace('text-gray-800', 'text-gray-100'));
+            navText.classList.replace('text-gray-900', 'text-white');
+        }
+    });
+
+    function renderFoodGrid() {
+        const grid = document.getElementById('food-grid');
+        if(!grid) return;
+        grid.innerHTML = foodItems.map((item, index) => {
+            const finalPrice = item.offer || item.price;
+            return `
+                <div class="swiper-slide !h-auto">
+                <div class="bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl transition-all border border-gray-100 group food-card gs-reveal h-full flex flex-col" data-tilt data-tilt-max="5" data-tilt-speed="400" data-tilt-glare="true" data-tilt-max-glare="0.1" style="transition-delay: ${index * 100}ms">
                     <div class="relative h-56 w-full rounded-2xl overflow-hidden mb-4 bg-gray-50">
                         <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                         <div class="absolute top-3 left-3 flex gap-2">
@@ -1180,7 +1233,7 @@
                             <button data-add-to-cart-index="${index}" class="w-12 h-12 bg-brand text-white rounded-full flex items-center justify-center transform translate-y-4 group-hover:translate-y-0 transition-all hover:bg-white hover:text-brand"><i class="ph ph-shopping-cart text-xl"></i></button>
                         </div>
                     </div>
-                    <div class="px-2">
+                    <div class="px-2 flex-1 flex flex-col">
                         <h3 class="font-serif font-bold text-lg text-gray-900 mb-1 truncate" title="${item.name}">${item.name}</h3>
                         <p class="text-xs text-gray-500 mb-4 line-clamp-2">${item.desc}</p>
                         <div class="flex items-center justify-between mt-auto">
@@ -1192,72 +1245,102 @@
                         </div>
                     </div>
                 </div>
+                </div>
             `}).join('');
-            VanillaTilt.init(document.querySelectorAll(".food-card"));
-            // Event delegation instead of inline onclick="..." — dish names from the sheet can
-            // contain characters like & ' " that break HTML attribute parsing if interpolated directly.
-            grid.querySelectorAll('[data-add-to-cart-index]').forEach(btn => {
-                btn.onclick = () => addToCart(foodItems[Number(btn.dataset.addToCartIndex)]);
+        VanillaTilt.init(document.querySelectorAll(".food-card"));
+        // Event delegation instead of inline onclick="..." — dish names from the sheet can
+        // contain characters like & ' " that break HTML attribute parsing if interpolated directly.
+        grid.querySelectorAll('[data-add-to-cart-index]').forEach(btn => {
+            btn.onclick = () => addToCart(foodItems[Number(btn.dataset.addToCartIndex)]);
+        });
+        initBestSellerSwiper();
+    }
+
+    let bestSellerSwiperInstance = null;
+    function initBestSellerSwiper() {
+        if (bestSellerSwiperInstance) { bestSellerSwiperInstance.destroy(true, true); bestSellerSwiperInstance = null; }
+        const moreThanThree = foodItems.length > 3;
+        const prevBtn = document.getElementById('best-seller-prev');
+        const nextBtn = document.getElementById('best-seller-next');
+
+        bestSellerSwiperInstance = new Swiper('#best-seller-swiper', {
+            slidesPerView: 1.15,
+            spaceBetween: 16,
+            grabCursor: true,
+            navigation: moreThanThree ? { nextEl: '#best-seller-next', prevEl: '#best-seller-prev' } : false,
+            breakpoints: {
+                640: { slidesPerView: 2, spaceBetween: 20 },
+                1024: { slidesPerView: moreThanThree ? 3.5 : 3, spaceBetween: 24 }
+            }
+        });
+
+        // Arrows only make sense (and are only shown) on desktop when there are more than 3 items
+        if (moreThanThree) {
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+        } else {
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+        }
+    }
+
+    function toggleCart() {
+        const overlay = document.getElementById('cart-overlay');
+        const sidebar = document.getElementById('cart-sidebar');
+        if (sidebar.classList.contains('translate-x-full')) {
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            sidebar.classList.remove('translate-x-full');
+        } else {
+            overlay.classList.add('opacity-0');
+            sidebar.classList.add('translate-x-full');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+    }
+
+    function addToCart(item) {
+        const existing = cart.find(i => i.id === item.id);
+        if (existing) { existing.qty += 1; }
+        else {
+            cart.push({
+                id: item.id, name: item.name,
+                price: item.offer || item.price,
+                img: item.img, qty: 1
             });
         }
+        saveCart();
+        showToast(`${item.name} added to cart`);
+        updateCartUI();
+    }
 
-        function toggleCart() {
-            const overlay = document.getElementById('cart-overlay');
-            const sidebar = document.getElementById('cart-sidebar');
-            if (sidebar.classList.contains('translate-x-full')) {
-                overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-                sidebar.classList.remove('translate-x-full');
-            } else {
-                overlay.classList.add('opacity-0');
-                sidebar.classList.add('translate-x-full');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            }
+    function updateCartQty(id, change) {
+        const index = cart.findIndex(i => i.id === id);
+        if (index > -1) {
+            cart[index].qty += change;
+            if (cart[index].qty <= 0) cart.splice(index, 1);
         }
+        saveCart();
+        updateCartUI();
+    }
 
-        function addToCart(item) {
-            const existing = cart.find(i => i.id === item.id);
-            if (existing) { existing.qty += 1; } 
-            else {
-                cart.push({
-                    id: item.id, name: item.name, 
-                    price: item.offer || item.price, 
-                    img: item.img, qty: 1
-                });
-            }
-            saveCart();
-            showToast(`${item.name} added to cart`);
-            updateCartUI();
-        }
+    function updateCartUI() {
+        const container = document.getElementById('cart-items');
+        const badge = document.getElementById('cart-count-badge');
+        const badgeMob = document.getElementById('cart-count-badge-mobile');
+        const badgeBottom = document.getElementById('cart-count-badge-bottom');
+        const subTotalEl = document.getElementById('cart-subtotal');
+        const totalEl = document.getElementById('cart-total');
 
-        function updateCartQty(id, change) {
-            const index = cart.findIndex(i => i.id === id);
-            if (index > -1) {
-                cart[index].qty += change;
-                if (cart[index].qty <= 0) cart.splice(index, 1);
-            }
-            saveCart();
-            updateCartUI();
-        }
+        let totalQty = 0;
+        let subTotal = 0;
 
-        function updateCartUI() {
-            const container = document.getElementById('cart-items');
-            const badge = document.getElementById('cart-count-badge');
-            const badgeMob = document.getElementById('cart-count-badge-mobile');
-            const badgeBottom = document.getElementById('cart-count-badge-bottom');
-            const subTotalEl = document.getElementById('cart-subtotal');
-            const totalEl = document.getElementById('cart-total');
-            
-            let totalQty = 0;
-            let subTotal = 0;
-
-            if (cart.length === 0) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 opacity-60"><i class="ph-duotone ph-shopping-cart text-6xl mb-4"></i><p>Your cart is empty.</p></div>`;
-            } else {
-                container.innerHTML = cart.map(item => {
-                    totalQty += item.qty;
-                    subTotal += item.price * item.qty;
-                    return `
+        if (cart.length === 0) {
+            container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 opacity-60"><i class="ph-duotone ph-shopping-cart text-6xl mb-4"></i><p>Your cart is empty.</p></div>`;
+        } else {
+            container.innerHTML = cart.map(item => {
+                totalQty += item.qty;
+                subTotal += item.price * item.qty;
+                return `
                     <div class="flex gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
                         <img src="${item.img}" class="w-20 h-20 object-cover rounded-xl">
                         <div class="flex-1 flex flex-col justify-between">
@@ -1275,132 +1358,132 @@
                             </div>
                         </div>
                     </div>`;
-                }).join('');
-            }
-
-            badge.textContent = totalQty;
-            badgeMob.textContent = totalQty;
-            badgeBottom.textContent = totalQty;
-            badge.style.opacity = totalQty > 0 ? 1 : 0;
-            badgeMob.style.opacity = totalQty > 0 ? 1 : 0;
-            badgeBottom.style.opacity = totalQty > 0 ? 1 : 0;
-            
-            subTotalEl.textContent = `₹${subTotal}`;
-            totalEl.textContent = `₹${subTotal}`;
+            }).join('');
         }
 
-        function openCheckoutModal() {
-            if (cart.length === 0) return showToast("Your cart is empty!");
-            toggleCart();
-            const modal = document.getElementById('checkout-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                document.getElementById('checkout-modal-content').classList.remove('scale-95');
-            }, 10);
-        }
+        badge.textContent = totalQty;
+        badgeMob.textContent = totalQty;
+        badgeBottom.textContent = totalQty;
+        badge.style.opacity = totalQty > 0 ? 1 : 0;
+        badgeMob.style.opacity = totalQty > 0 ? 1 : 0;
+        badgeBottom.style.opacity = totalQty > 0 ? 1 : 0;
 
-        function closeCheckoutModal() {
-            const modal = document.getElementById('checkout-modal');
-            modal.classList.add('opacity-0');
-            document.getElementById('checkout-modal-content').classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
+        subTotalEl.textContent = `₹${subTotal}`;
+        totalEl.textContent = `₹${subTotal}`;
+    }
 
-        function processWhatsAppCheckout(e) {
-            e.preventDefault();
-            const name = document.getElementById('co-name').value;
-            const phone = document.getElementById('co-phone').value;
-            const address = document.getElementById('co-address').value;
-            const time = document.getElementById('co-time').value;
-            const payment = document.getElementById('co-payment').value;
+    function openCheckoutModal() {
+        if (cart.length === 0) return showToast("Your cart is empty!");
+        toggleCart();
+        const modal = document.getElementById('checkout-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            document.getElementById('checkout-modal-content').classList.remove('scale-95');
+        }, 10);
+    }
 
-            let orderText = `*Hello Kolkata Bites,*\nI would like to place an order.\n\n`;
-            orderText += `*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\n\n`;
-            orderText += `*Order Items:*\n`;
-            
-            let total = 0;
-            cart.forEach(item => {
-                orderText += `- ${item.qty}x ${item.name} (₹${item.price})\n`;
-                total += item.price * item.qty;
-            });
+    function closeCheckoutModal() {
+        const modal = document.getElementById('checkout-modal');
+        modal.classList.add('opacity-0');
+        document.getElementById('checkout-modal-content').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
 
-            orderText += `\n*Subtotal:* ₹${total}\n*Grand Total:* ₹${total}\n\n`;
-            orderText += `*Delivery Time:* ${time}\n*Payment Mode:* ${payment}\n\n`;
-            orderText += `Please confirm my order.`;
+    function processWhatsAppCheckout(e) {
+        e.preventDefault();
+        const name = document.getElementById('co-name').value;
+        const phone = document.getElementById('co-phone').value;
+        const address = document.getElementById('co-address').value;
+        const time = document.getElementById('co-time').value;
+        const payment = document.getElementById('co-payment').value;
 
-            const encodedURL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(orderText)}`;
-            window.open(encodedURL, '_blank');
-            closeCheckoutModal();
-            cart = [];
-            saveCart();
-            updateCartUI();
-        }
+        let orderText = `*Hello Kolkata Bites,*\nI would like to place an order.\n\n`;
+        orderText += `*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\n\n`;
+        orderText += `*Order Items:*\n`;
 
-        function handleReservation(e) {
-            e.preventDefault();
-            const name = document.getElementById('res-name').value;
-            const phone = document.getElementById('res-phone').value;
-            const date = document.getElementById('res-date').value;
-            const time = document.getElementById('res-time').value;
-            const guests = document.getElementById('res-guests').value;
-            const request = document.getElementById('res-request').value;
+        let total = 0;
+        cart.forEach(item => {
+            orderText += `- ${item.qty}x ${item.name} (₹${item.price})\n`;
+            total += item.price * item.qty;
+        });
 
-            let msg = `*Hello Kolkata Bites,*\nI would like to reserve a table.\n\n`;
-            msg += `*Name:* ${name}\n*Phone:* ${phone}\n*Date:* ${date}\n*Time:* ${time}\n*Guests:* ${guests}\n`;
-            if (request) msg += `*Special Request:* ${request}\n`;
-            msg += `\nPlease confirm my reservation.`;
+        orderText += `\n*Subtotal:* ₹${total}\n*Grand Total:* ₹${total}\n\n`;
+        orderText += `*Delivery Time:* ${time}\n*Payment Mode:* ${payment}\n\n`;
+        orderText += `Please confirm my order.`;
 
-            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
+        const encodedURL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(orderText)}`;
+        window.open(encodedURL, '_blank');
+        closeCheckoutModal();
+        cart = [];
+        saveCart();
+        updateCartUI();
+    }
 
-        function handleCatering(e) {
-            e.preventDefault();
-            const name = document.getElementById('cat-name').value;
-            const phone = document.getElementById('cat-phone').value;
-            const event = document.getElementById('cat-event').value;
-            const guests = document.getElementById('cat-guests').value;
-            const budget = document.getElementById('cat-budget').value;
-            const req = document.getElementById('cat-req').value;
+    function handleReservation(e) {
+        e.preventDefault();
+        const name = document.getElementById('res-name').value;
+        const phone = document.getElementById('res-phone').value;
+        const date = document.getElementById('res-date').value;
+        const time = document.getElementById('res-time').value;
+        const guests = document.getElementById('res-guests').value;
+        const request = document.getElementById('res-request').value;
 
-            let msg = `*Hello Kolkata Bites,*\nI would like to enquire about catering.\n\n`;
-            msg += `*Name:* ${name}\n*Phone:* ${phone}\n*Event:* ${event}\n*Guests:* ${guests}\n*Budget:* ${budget}\n*Requirements:* ${req}\n\n`;
-            msg += `Please contact me with details.`;
+        let msg = `*Hello Kolkata Bites,*\nI would like to reserve a table.\n\n`;
+        msg += `*Name:* ${name}\n*Phone:* ${phone}\n*Date:* ${date}\n*Time:* ${time}\n*Guests:* ${guests}\n`;
+        if (request) msg += `*Special Request:* ${request}\n`;
+        msg += `\nPlease confirm my reservation.`;
 
-            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
+        window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
 
-        function initAnimations() {
-            // Lenis Smooth Scroll Setup
-            const lenis = new Lenis({ duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
-            function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
-            requestAnimationFrame(raf);
+    function handleCatering(e) {
+        e.preventDefault();
+        const name = document.getElementById('cat-name').value;
+        const phone = document.getElementById('cat-phone').value;
+        const event = document.getElementById('cat-event').value;
+        const guests = document.getElementById('cat-guests').value;
+        const budget = document.getElementById('cat-budget').value;
+        const req = document.getElementById('cat-req').value;
 
-            gsap.registerPlugin(ScrollTrigger);
+        let msg = `*Hello Kolkata Bites,*\nI would like to enquire about catering.\n\n`;
+        msg += `*Name:* ${name}\n*Phone:* ${phone}\n*Event:* ${event}\n*Guests:* ${guests}\n*Budget:* ${budget}\n*Requirements:* ${req}\n\n`;
+        msg += `Please contact me with details.`;
 
-            // Swiper JS Setup for Reviews
-            new Swiper('.reviewSwiper', {
-                slidesPerView: 1, spaceBetween: 30,
-                pagination: { el: '.swiper-pagination', clickable: true },
-                breakpoints: { 768: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } },
-                autoplay: { delay: 4000, disableOnInteraction: false }
-            });
+        window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
 
-            // GSAP Scroll Reveals
-            const revealElements = document.querySelectorAll('.gs-reveal');
-            revealElements.forEach((el) => {
-                gsap.fromTo(el, 
-                    { opacity: 0, y: 50 }, 
-                    { scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none reverse" }, opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }
-                );
-            });
+    function initAnimations() {
+        // Lenis Smooth Scroll Setup
+        const lenis = new Lenis({ duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
 
-            // Hero Parallax
-            gsap.to("#hero-bg", {
-                yPercent: 30, ease: "none",
-                scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: true }
-            });
-        }
-    </script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Swiper JS Setup for Reviews
+        new Swiper('.reviewSwiper', {
+            slidesPerView: 1, spaceBetween: 30,
+            pagination: { el: '.swiper-pagination', clickable: true },
+            breakpoints: { 768: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } },
+            autoplay: { delay: 4000, disableOnInteraction: false }
+        });
+
+        // GSAP Scroll Reveals
+        const revealElements = document.querySelectorAll('.gs-reveal');
+        revealElements.forEach((el) => {
+            gsap.fromTo(el,
+                { opacity: 0, y: 50 },
+                { scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none reverse" }, opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }
+            );
+        });
+
+        // Hero Parallax
+        gsap.to("#hero-bg", {
+            yPercent: 30, ease: "none",
+            scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: true }
+        });
+    }
+</script>
 </body>
 </html>

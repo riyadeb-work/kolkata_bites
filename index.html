@@ -107,14 +107,15 @@
 
         @keyframes type {
             from { width: 0; }
-            to { width: 100%; }
+            to { width: 22ch; }
         }
         .typing-text {
             overflow: hidden;
             white-space: nowrap;
             border-right: 2px solid var(--brand);
-            animation: type 3.5s steps(40, end), blink-caret .75s step-end infinite;
+            animation: type 1.8s steps(22, end) forwards, blink-caret .75s step-end infinite;
             max-width: 100%;
+            width: 22ch;
             font-size: clamp(1.5rem, 8.2vw, 4.5rem);
             line-height: 1.15;
         }
@@ -124,6 +125,24 @@
         @keyframes blink-caret {
             from, to { border-color: transparent }
             50% { border-color: var(--brand); }
+        }
+
+        /* Hero circular image - explicit square box + full radius, not reliant on Tailwind arbitrary values */
+        .hero-img-wrap {
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .hero-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: block;
+        }
+        @media (min-width: 1024px) {
+            .hero-img-wrap { width: 400px; height: 400px; }
         }
 
         /* Custom Scrollbar */
@@ -145,6 +164,14 @@
         .veg-badge::after { content: ''; width: 8px; height: 8px; background-color: #1E7D3A; border-radius: 50%; }
         .non-veg-badge { width: 16px; height: 16px; border: 2px solid #D32F2F; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
         .non-veg-badge::after { content: ''; width: 8px; height: 8px; background-color: #D32F2F; border-radius: 50%; }
+
+        /* Skeleton loaders (used while sheet data fetches) */
+        @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+        .skeleton {
+            background: linear-gradient(90deg, #eee 0px, #f5f5f5 40px, #eee 80px);
+            background-size: 800px 100%;
+            animation: shimmer 1.4s infinite linear;
+        }
 
         /* Toast */
         #toast-container {
@@ -399,8 +426,8 @@
 
                     <!-- Hero Visuals (3D Composition) -->
                     <div class="relative h-[420px] lg:h-[500px] hidden lg:block hero-visual">
-                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 animate-float shadow-2xl rounded-full">
-                            <img src="https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?q=80&w=800&auto=format&fit=crop" alt="Premium Biryani" class="w-[340px] h-[340px] lg:w-[400px] lg:h-[400px] object-cover rounded-full border-4 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 animate-float shadow-2xl hero-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?q=80&w=800&auto=format&fit=crop" alt="Premium Biryani" class="hero-img object-cover border-4 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
                         </div>
                         <!-- Floating Cards -->
                         <div class="absolute top-16 lg:top-20 right-2 lg:right-10 z-30 glass-dark p-4 rounded-2xl flex items-center gap-4 animate-float-delayed shadow-xl backdrop-blur-md">
@@ -479,7 +506,12 @@
                     </div>
 
                     <!-- Food Grid (Injected by JS) -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8" id="food-grid"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8" id="food-grid">
+                        <div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
+                        <div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
+                        <div class="rounded-3xl overflow-hidden border border-gray-100 hidden md:block"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
+                        <div class="rounded-3xl overflow-hidden border border-gray-100 hidden xl:block"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>
+                    </div>
                 </div>
             </section>
 
@@ -490,7 +522,7 @@
                 <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10">
                     <div class="bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col lg:flex-row gs-reveal">
                         <div class="lg:w-2/5 relative h-[280px] sm:h-[340px] lg:h-auto">
-                            <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=800&auto=format&fit=crop" alt="Executive Chef" class="w-full h-full object-cover">
+                            <img id="chef-special-img" src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=800&auto=format&fit=crop" alt="Executive Chef" class="w-full h-full object-cover">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 sm:p-8">
                                 <div>
                                     <h3 class="text-white font-serif text-2xl font-bold">Chef Arindam</h3>
@@ -503,18 +535,18 @@
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold uppercase tracking-wider mb-6 w-max">
                                 <i class="ph-fill ph-star"></i> Chef's Signature
                             </div>
-                            <h2 class="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-4">Kosha Mangsho & Basanti Pulao</h2>
-                            <p class="text-gray-600 mb-8 leading-relaxed">
+                            <h2 id="chef-special-name" class="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-4">Kosha Mangsho & Basanti Pulao</h2>
+                            <p id="chef-special-desc" class="text-gray-600 mb-8 leading-relaxed">
                                 "This recipe has been passed down through generations in my family. Slow-cooked mutton in rich, aromatic spices, served with sweet and fragrant yellow rice. It is not just food; it is an emotion on a plate."
                             </p>
                             
                             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                 <div>
-                                    <span class="text-brand font-bold text-2xl">₹450</span>
-                                    <span class="text-gray-400 text-sm line-through ml-2">₹550</span>
+                                    <span id="chef-special-price" class="text-brand font-bold text-2xl">₹450</span>
+                                    <span id="chef-special-strike" class="text-gray-400 text-sm line-through ml-2">₹550</span>
                                 </div>
-                                <button onclick="addToCart({id: 'c1', name: 'Kosha Mangsho & Pulao', price: 550, offer: 450, isVeg: false, img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=500&q=80'})" class="px-6 py-3 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors shadow-lg shadow-brand/30">
-                                    Add to Order
+                                <button id="chef-special-add-btn" class="px-6 py-3 bg-brand text-white rounded-xl font-medium hover:bg-brandDark transition-colors shadow-lg shadow-brand/30">
+                                    Add to Cart
                                 </button>
                             </div>
                         </div>
@@ -858,13 +890,165 @@
             } catch (e) { /* storage unavailable, fail silently */ }
         }
 
-        // Mock Food Data
-        const foodItems = [
+        /* =========================================================
+           GOOGLE SHEET → HOMEPAGE DATA (Best Sellers + Chef's Signature)
+           Same workbook as menu.html, different tabs (gid) inside it.
+        ========================================================= */
+        // Reuse the published CSV base from menu.html's sheet. Since "publish to web"
+        // links are per-sheet-tab, set one CSV URL per tab below (swap in your real links).
+        const BEST_SELLERS_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=BEST_SELLERS_GID&single=true&output=csv`;
+        const CHEF_SPECIAL_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=CHEF_SPECIAL_GID&single=true&output=csv`;
+        // If you're using the gviz endpoint instead (no "publish to web" needed, sheet must be
+        // shared as "Anyone with the link can view"), use this pattern per tab instead:
+        // const SHEET_ID = "1A2B3C_REPLACE_WITH_YOUR_SHEET_ID";
+        // const BEST_SELLERS_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=BEST_SELLERS_GID`;
+        // const CHEF_SPECIAL_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=CHEF_SPECIAL_GID`;
+        const IMAGE_BASE_URL = "images/";
+
+        // Fallback data shown only if a sheet tab can't be reached (offline demo / first-time setup)
+        const FALLBACK_BEST_SELLERS = [
             { id: 'f1', name: 'Authentic Chicken Biryani', desc: 'Aromatic basmati rice cooked with tender chicken and secret spices.', price: 250, offer: 220, isVeg: false, rating: 4.8, img: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=600&auto=format&fit=crop' },
             { id: 'f2', name: 'Bengali Fish Curry', desc: 'Traditional Rui Maach (Rohu Fish) in a mustard and tomato gravy.', price: 180, offer: null, isVeg: false, rating: 4.7, img: 'https://images.unsplash.com/photo-1627000845348-18e3ec4d6ce2?q=80&w=600&auto=format&fit=crop' },
             { id: 'f3', name: 'Paneer Butter Masala', desc: 'Soft cottage cheese cubes in a creamy, rich tomato gravy.', price: 220, offer: null, isVeg: true, rating: 4.6, img: 'https://images.unsplash.com/photo-1552590635-27c2c2128abf?q=80&w=600&auto=format&fit=crop' },
             { id: 'f4', name: 'Mutton Dakbungalow', desc: 'Heritage recipe with slow-cooked mutton, egg, and potato.', price: 350, offer: 320, isVeg: false, rating: 4.9, img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?q=80&w=600&auto=format&fit=crop' }
         ];
+        const FALLBACK_CHEF_SPECIAL = {
+            id: 'c1', name: 'Kosha Mangsho & Pulao', chefName: 'Chef Arindam', chefTitle: 'Executive Head Chef',
+            desc: '"This recipe has been passed down through generations in my family. Slow-cooked mutton in rich, aromatic spices, served with sweet and fragrant yellow rice. It is not just food; it is an emotion on a plate."',
+            price: 550, offer: 450, isVeg: false,
+            img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=500&q=80',
+            chefImg: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=800&auto=format&fit=crop'
+        };
+
+        let foodItems = FALLBACK_BEST_SELLERS;
+
+        // Same robust CSV parser used on menu.html (handles quoted fields with commas/newlines)
+        function parseCSV(text) {
+            const rows = [];
+            let row = [], field = '', inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i], next = text[i + 1];
+                if (inQuotes) {
+                    if (c === '"' && next === '"') { field += '"'; i++; }
+                    else if (c === '"') { inQuotes = false; }
+                    else { field += c; }
+                } else {
+                    if (c === '"') inQuotes = true;
+                    else if (c === ',') { row.push(field); field = ''; }
+                    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                    else if (c === '\r') { /* skip */ }
+                    else { field += c; }
+                }
+            }
+            if (field.length || row.length) { row.push(field); rows.push(row); }
+            return rows.filter(r => r.some(cell => cell.trim() !== ''));
+        }
+
+        function resolveImg(imageFile, fallbackName) {
+            if (!imageFile) return `https://placehold.co/600x400/E8F3EB/1E7D3A?text=${encodeURIComponent(fallbackName)}`;
+            return imageFile.startsWith('http') ? imageFile : IMAGE_BASE_URL + imageFile;
+        }
+
+        // Expected headers (case-insensitive) for the Best Sellers tab:
+        // name | price | offer_price | image | is_veg | rating | description
+        function parseBestSellersCSV(csvText) {
+            const rows = parseCSV(csvText);
+            if (!rows.length) return [];
+            const headers = rows[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+            return rows.slice(1).map((cols, idx) => {
+                const get = (key) => { const i = headers.indexOf(key); return i > -1 ? (cols[i] || '').trim() : ''; };
+                const name = get('name') || get('food_name') || get('item_name');
+                if (!name) return null;
+                const price = parseFloat(get('price')) || 0;
+                const offerRaw = get('offer_price') || get('offer');
+                const offer = offerRaw ? parseFloat(offerRaw) : null;
+                return {
+                    id: 'bs-' + idx,
+                    name,
+                    desc: get('description') || get('desc'),
+                    price,
+                    offer: (offer && offer < price) ? offer : null,
+                    isVeg: ['yes', 'true', 'veg', '1'].includes((get('is_veg') || get('veg')).toLowerCase()),
+                    rating: parseFloat(get('rating')) || 4.5,
+                    img: resolveImg(get('image') || get('image_file_name'), name)
+                };
+            }).filter(Boolean);
+        }
+
+        // Expected headers (case-insensitive) for the Chef's Signature tab — one row is enough,
+        // first row is used. Headers: name | chef_name | chef_title | price | offer_price |
+        // image | chef_image | is_veg | description
+        function parseChefSpecialCSV(csvText) {
+            const rows = parseCSV(csvText);
+            if (rows.length < 2) return null;
+            const headers = rows[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+            const cols = rows[1];
+            const get = (key) => { const i = headers.indexOf(key); return i > -1 ? (cols[i] || '').trim() : ''; };
+            const name = get('name') || get('dish_name');
+            if (!name) return null;
+            const price = parseFloat(get('price')) || 0;
+            const offerRaw = get('offer_price') || get('offer');
+            const offer = offerRaw ? parseFloat(offerRaw) : null;
+            return {
+                id: 'chef-special',
+                name,
+                chefName: get('chef_name') || 'Chef Arindam',
+                chefTitle: get('chef_title') || 'Executive Head Chef',
+                desc: get('description') || get('desc'),
+                price, offer: (offer && offer < price) ? offer : null,
+                isVeg: ['yes', 'true', 'veg', '1'].includes((get('is_veg') || get('veg')).toLowerCase()),
+                img: resolveImg(get('image'), name),
+                chefImg: resolveImg(get('chef_image'), get('chef_name') || 'chef')
+            };
+        }
+
+        async function loadBestSellers() {
+            try {
+                const res = await fetch(BEST_SELLERS_CSV_URL);
+                if (!res.ok) throw new Error('Network response was not ok');
+                const items = parseBestSellersCSV(await res.text());
+                if (!items.length) throw new Error('No rows parsed');
+                foodItems = items;
+            } catch (err) {
+                console.error('Best Sellers sheet load failed, using fallback data:', err);
+                foodItems = FALLBACK_BEST_SELLERS;
+            }
+            renderFoodGrid();
+        }
+
+        async function loadChefSpecial() {
+            let dish = FALLBACK_CHEF_SPECIAL;
+            try {
+                const res = await fetch(CHEF_SPECIAL_CSV_URL);
+                if (!res.ok) throw new Error('Network response was not ok');
+                const parsed = parseChefSpecialCSV(await res.text());
+                if (!parsed) throw new Error('No rows parsed');
+                dish = parsed;
+            } catch (err) {
+                console.error("Chef's Signature sheet load failed, using fallback data:", err);
+            }
+            renderChefSpecial(dish);
+        }
+
+        function renderChefSpecial(dish) {
+            const finalPrice = dish.offer || dish.price;
+            document.getElementById('chef-special-img').src = dish.chefImg;
+            document.getElementById('chef-special-name').textContent = dish.name;
+            document.getElementById('chef-special-desc').textContent = dish.desc;
+            document.getElementById('chef-special-price').textContent = `₹${finalPrice}`;
+            const strikeEl = document.getElementById('chef-special-strike');
+            if (dish.offer) {
+                strikeEl.textContent = `₹${dish.price}`;
+                strikeEl.classList.remove('hidden');
+            } else {
+                strikeEl.classList.add('hidden');
+            }
+            const btn = document.getElementById('chef-special-add-btn');
+            const cartItem = { id: dish.id, name: dish.name, price: finalPrice, offer: null, isVeg: dish.isVeg, img: dish.img };
+            // Use a JS closure instead of building an onclick="..." string — dish names can
+            // contain characters like & ' " that break HTML attribute parsing if interpolated directly.
+            btn.onclick = () => addToCart(cartItem);
+        }
 
         // Initialization
         window.addEventListener('load', () => {
@@ -874,7 +1058,8 @@
                 setTimeout(() => loader.style.display = 'none', 600);
             }, 1000);
 
-            renderFoodGrid();
+            loadBestSellers();
+            loadChefSpecial();
             initAnimations();
             updateCartUI();
             initBottomNavScrollSync();
@@ -992,7 +1177,7 @@
                             <div class="bg-white/90 backdrop-blur-sm px-2 py-1 rounded shadow-sm flex items-center gap-1 text-xs font-bold"><i class="ph-fill ph-star text-gold"></i> ${item.rating}</div>
                         </div>
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-[2px]">
-                            <button onclick='addToCart(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="w-12 h-12 bg-brand text-white rounded-full flex items-center justify-center transform translate-y-4 group-hover:translate-y-0 transition-all hover:bg-white hover:text-brand"><i class="ph ph-shopping-cart text-xl"></i></button>
+                            <button data-add-to-cart-index="${index}" class="w-12 h-12 bg-brand text-white rounded-full flex items-center justify-center transform translate-y-4 group-hover:translate-y-0 transition-all hover:bg-white hover:text-brand"><i class="ph ph-shopping-cart text-xl"></i></button>
                         </div>
                     </div>
                     <div class="px-2">
@@ -1003,12 +1188,17 @@
                                 <span class="font-bold text-lg text-brand">₹${finalPrice}</span>
                                 ${item.offer ? `<span class="text-xs text-gray-400 line-through">₹${item.price}</span>` : ''}
                             </div>
-                            <button onclick='addToCart(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="px-4 py-2 bg-brandLight text-brand rounded-xl text-sm font-medium hover:bg-brand hover:text-white transition-colors">Add</button>
+                            <button data-add-to-cart-index="${index}" class="px-4 py-2 bg-brandLight text-brand rounded-xl text-sm font-medium hover:bg-brand hover:text-white transition-colors">Add</button>
                         </div>
                     </div>
                 </div>
             `}).join('');
             VanillaTilt.init(document.querySelectorAll(".food-card"));
+            // Event delegation instead of inline onclick="..." — dish names from the sheet can
+            // contain characters like & ' " that break HTML attribute parsing if interpolated directly.
+            grid.querySelectorAll('[data-add-to-cart-index]').forEach(btn => {
+                btn.onclick = () => addToCart(foodItems[Number(btn.dataset.addToCartIndex)]);
+            });
         }
 
         function toggleCart() {
@@ -1096,7 +1286,7 @@
             badgeBottom.style.opacity = totalQty > 0 ? 1 : 0;
             
             subTotalEl.textContent = `₹${subTotal}`;
-            totalEl.textContent = `₹${subTotal > 0 ? subTotal + 40 : 0}`; // Adding flat 40 delivery
+            totalEl.textContent = `₹${subTotal}`;
         }
 
         function openCheckoutModal() {
@@ -1135,7 +1325,7 @@
                 total += item.price * item.qty;
             });
 
-            orderText += `\n*Subtotal:* ₹${total}\n*Delivery:* ₹40\n*Grand Total:* ₹${total + 40}\n\n`;
+            orderText += `\n*Subtotal:* ₹${total}\n*Grand Total:* ₹${total}\n\n`;
             orderText += `*Delivery Time:* ${time}\n*Payment Mode:* ${payment}\n\n`;
             orderText += `Please confirm my order.`;
 

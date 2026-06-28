@@ -56,9 +56,23 @@
         .non-veg-badge { width: 16px; height: 16px; border: 2px solid #D32F2F; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
         .non-veg-badge::after { content: ''; width: 8px; height: 8px; background-color: #D32F2F; border-radius: 50%; }
 
-        /* Category pill scroller */
-        .cat-scroller { scrollbar-width: none; -ms-overflow-style: none; }
-        .cat-scroller::-webkit-scrollbar { display: none; }
+        /* Category pills — collapsible wrap (capped height + Show more/less) */
+        .cat-wrap {
+            max-height: 84px; /* ~2 rows at this pill size */
+            overflow: hidden;
+            transition: max-height 0.25s ease;
+        }
+        .cat-wrap.expanded {
+            max-height: 1000px;
+        }
+        .cat-toggle-btn {
+            display: flex; align-items: center; gap: 4px;
+            margin-top: 6px; padding: 0;
+            font-size: 0.75rem; font-weight: 600; color: var(--brand);
+            background: none; border: none; cursor: pointer;
+        }
+        .cat-toggle-btn i { font-size: 0.9rem; transition: transform 0.2s ease; }
+        .cat-toggle-btn.expanded i { transform: rotate(180deg); }
         .cat-pill {
             flex-shrink: 0; white-space: nowrap; padding: 0.5rem 1.1rem;
             border-radius: 999px; font-size: 0.85rem; font-weight: 500;
@@ -66,6 +80,34 @@
             transition: all 0.2s ease; cursor: pointer;
         }
         .cat-pill.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+        .diet-toggle {
+            display: flex; align-items: center; gap: 2px;
+            background: #F3F4F6; border-radius: 999px; padding: 3px;
+        }
+        .diet-seg {
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            padding: 0.4rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 600;
+            color: #6B7280; background: transparent; border: none; cursor: pointer;
+            white-space: nowrap; transition: all 0.18s ease; line-height: 1;
+        }
+        .diet-seg:first-child { padding: 0.4rem 0.6rem; }
+        .diet-seg.active { background: #fff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .diet-seg .veg-badge, .diet-seg .non-veg-badge { width: 14px; height: 14px; flex-shrink: 0; }
+
+        .reset-filters-btn {
+            display: flex; align-items: center; gap: 5px;
+            padding: 0.5rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+            color: #9CA3AF; background: #fff; border: 1px solid #E5E7EB; cursor: pointer;
+            white-space: nowrap; transition: all 0.18s ease;
+        }
+        .reset-filters-btn i { font-size: 1rem; }
+        .reset-filters-btn:hover { color: #DC2626; border-color: #FCA5A5; background: #FEF2F2; }
+        .reset-filters-btn.has-filters { color: #DC2626; border-color: #FCA5A5; background: #FEF2F2; }
+        .reset-label { display: none; }
+        @media (min-width: 400px) {
+            .reset-label { display: inline; }
+        }
 
         /* Skeleton loaders */
         @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
@@ -89,9 +131,26 @@
         .toast.show { opacity: 1; transform: translateY(0); }
 
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* Page Loader (matches index.html) */
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+        #page-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 9999; display: flex;
+            justify-content: center; align-items: center; flex-direction: column;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .loader-leaf { font-size: 3rem; color: var(--brand); animation: float 2s ease-in-out infinite; }
     </style>
 </head>
 <body class="text-gray-800 antialiased pb-24">
+
+    <!-- Page Loader -->
+    <div id="page-loader">
+        <i class="ph ph-leaf loader-leaf"></i>
+        <h2 class="font-serif text-2xl mt-4 text-brand font-bold tracking-wider">Kolkata Bites</h2>
+        <p class="text-sm text-gray-500 mt-2 tracking-widest uppercase">Loading Menu...</p>
+    </div>
 
     <!-- Toast Container -->
     <div id="toast-container"></div>
@@ -129,9 +188,36 @@
             </div>
         </div>
 
-        <!-- Category Pills -->
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 pb-3">
-            <div id="category-scroller" class="cat-scroller flex gap-2 overflow-x-auto"></div>
+        <!-- Filter Bar: Diet toggle + Reset on row 1, collapsible Category wrap below -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 pb-3 flex flex-col gap-2.5">
+            <!-- Row 1: Diet toggle + Reset -->
+            <div class="flex items-center gap-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 pl-1 shrink-0">Diet</span>
+                <div id="diet-toggle" class="diet-toggle">
+                    <button id="diet-filter-all" onclick="setDietFilter('all')" class="diet-seg active" data-diet="all" aria-label="All dishes">All</button>
+                    <button id="diet-filter-veg" onclick="setDietFilter('veg')" class="diet-seg" data-diet="veg" aria-label="Vegetarian only"><span class="veg-badge"></span><span class="diet-seg-label">Veg</span></button>
+                    <button id="diet-filter-nonveg" onclick="setDietFilter('nonveg')" class="diet-seg" data-diet="nonveg" aria-label="Non-vegetarian only"><span class="non-veg-badge"></span><span class="diet-seg-label">Non-Veg</span></button>
+                </div>
+
+                <!-- Reset all filters -->
+                <button id="reset-filters-btn" onclick="resetFilters()" class="reset-filters-btn ml-auto shrink-0" aria-label="Reset all filters" title="Reset filters">
+                    <i class="ph ph-x-circle"></i>
+                    <span class="reset-label">Reset</span>
+                </button>
+            </div>
+
+            <!-- Row 2: Categories — wraps into rows, capped to 2 rows by default with a
+                 "Show more" toggle so the filter bar never grows unbounded or needs scroll -->
+            <div>
+                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 pl-1 block mb-1.5">Category</span>
+                <div id="category-wrap" class="cat-wrap">
+                    <div id="category-scroller" class="flex flex-wrap gap-2"></div>
+                </div>
+                <button id="cat-toggle-btn" onclick="toggleCategoryExpand()" class="cat-toggle-btn hidden">
+                    <span id="cat-toggle-label">Show more</span>
+                    <i id="cat-toggle-icon" class="ph ph-caret-down"></i>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -286,6 +372,7 @@
         let allItems = [];
         let activeCategory = 'All';
         let searchTerm = '';
+        let dietFilter = 'all'; // 'all' | 'veg' | 'nonveg'
 
         function loadCart() {
             try {
@@ -318,6 +405,7 @@
                 renderMenu();
                 document.getElementById('menu-skeleton').classList.add('hidden');
                 document.getElementById('menu-container').classList.remove('hidden');
+                hidePageLoader();
             } catch (err) {
                 console.error('Menu load failed, falling back to sample data:', err);
                 allItems = FALLBACK_ITEMS;
@@ -325,10 +413,18 @@
                 renderMenu();
                 document.getElementById('menu-skeleton').classList.add('hidden');
                 document.getElementById('menu-container').classList.remove('hidden');
+                hidePageLoader();
                 // To show a hard error instead of fallback data, swap the three lines above for:
                 // document.getElementById('menu-skeleton').classList.add('hidden');
                 // document.getElementById('menu-error').classList.remove('hidden');
             }
+        }
+
+        function hidePageLoader() {
+            const loader = document.getElementById('page-loader');
+            if (!loader) return;
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 600);
         }
 
         // Robust CSV parser (handles quoted fields containing commas/newlines)
@@ -384,7 +480,7 @@
                 const desc = get('description') || get('desc');
                 const availableRaw = (get('available') || 'yes').toLowerCase();
                 const available = !['no', 'false', '0'].includes(availableRaw);
-                const category = get('category') || 'Specials';
+                const category = normalizeCategory(get('category')) || 'Specials';
 
                 return {
                     id: 'sheet-' + idx,
@@ -392,6 +488,15 @@
                     img, isVeg, rating, desc, available
                 };
             }).filter(item => item && item.available);
+        }
+
+        // Trims whitespace and title-cases a category string so sheet inconsistencies
+        // ("biryani ", "BIRYANI", "Biryani") all collapse to one consistent display value
+        // instead of producing duplicate category pills / section headers.
+        function normalizeCategory(raw) {
+            const trimmed = (raw || '').trim().replace(/\s+/g, ' ');
+            if (!trimmed) return '';
+            return trimmed.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
         }
 
         // Fallback data shown only if the sheet can't be reached (offline demo / first-time setup)
@@ -406,29 +511,84 @@
            RENDERING
         ========================================================= */
         function renderCategoryPills() {
+            // Categories are normalized in parseSheetCSV, so a plain Set-based dedup is safe here.
             const cats = ['All', ...Array.from(new Set(allItems.map(i => i.category)))];
             const scroller = document.getElementById('category-scroller');
             scroller.innerHTML = cats.map(cat => `
                 <button class="cat-pill ${cat === activeCategory ? 'active' : ''}" data-cat="${cat}" onclick="setCategory('${cat.replace(/'/g, "\\'")}')">${cat}</button>
             `).join('');
+            setupCategoryToggle();
+        }
+
+        // Shows the "Show more / Show less" toggle only when the category list
+        // actually overflows the collapsed 2-row height — otherwise hides it entirely.
+        function setupCategoryToggle() {
+            const wrap = document.getElementById('category-wrap');
+            const btn = document.getElementById('cat-toggle-btn');
+            if (!wrap || !btn) return;
+            wrap.classList.remove('expanded');
+            btn.classList.remove('expanded');
+            document.getElementById('cat-toggle-label').textContent = 'Show more';
+            document.getElementById('cat-toggle-icon').className = 'ph ph-caret-down';
+            // Measure on next frame so layout has settled after innerHTML update
+            requestAnimationFrame(() => {
+                const overflowing = wrap.scrollHeight > wrap.clientHeight + 2;
+                btn.classList.toggle('hidden', !overflowing);
+            });
+        }
+
+        function toggleCategoryExpand() {
+            const wrap = document.getElementById('category-wrap');
+            const btn = document.getElementById('cat-toggle-btn');
+            const expanded = wrap.classList.toggle('expanded');
+            btn.classList.toggle('expanded', expanded);
+            document.getElementById('cat-toggle-label').textContent = expanded ? 'Show less' : 'Show more';
         }
 
         function setCategory(cat) {
             activeCategory = cat;
             document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.cat === cat));
+            updateResetButtonState();
             renderMenu();
         }
 
         function onSearchInput() {
             searchTerm = document.getElementById('menu-search').value.trim().toLowerCase();
+            updateResetButtonState();
             renderMenu();
+        }
+
+        function setDietFilter(diet) {
+            dietFilter = diet;
+            document.querySelectorAll('.diet-seg').forEach(p => p.classList.toggle('active', p.dataset.diet === diet));
+            updateResetButtonState();
+            renderMenu();
+        }
+
+        function resetFilters() {
+            activeCategory = 'All';
+            dietFilter = 'all';
+            searchTerm = '';
+            document.getElementById('menu-search').value = '';
+            document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.cat === 'All'));
+            document.querySelectorAll('.diet-seg').forEach(p => p.classList.toggle('active', p.dataset.diet === 'all'));
+            updateResetButtonState();
+            renderMenu();
+        }
+
+        function updateResetButtonState() {
+            const btn = document.getElementById('reset-filters-btn');
+            if (!btn) return;
+            const hasFilters = activeCategory !== 'All' || dietFilter !== 'all' || !!searchTerm;
+            btn.classList.toggle('has-filters', hasFilters);
         }
 
         function getFilteredItems() {
             return allItems.filter(item => {
                 const matchesCat = activeCategory === 'All' || item.category === activeCategory;
                 const matchesSearch = !searchTerm || item.name.toLowerCase().includes(searchTerm);
-                return matchesCat && matchesSearch;
+                const matchesDiet = dietFilter === 'all' || (dietFilter === 'veg' ? item.isVeg : !item.isVeg);
+                return matchesCat && matchesSearch && matchesDiet;
             });
         }
 
@@ -463,11 +623,18 @@
                 html = `<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">${filtered.map(renderCard).join('')}</div>`;
             }
             container.innerHTML = html;
+            // Event delegation instead of inline onclick="..." — dish names from the sheet can
+            // contain characters like & ' " that break HTML attribute parsing if interpolated directly.
+            container.querySelectorAll('[data-item-id]').forEach(btn => {
+                btn.onclick = () => {
+                    const item = allItems.find(i => i.id === btn.dataset.itemId);
+                    if (item) addToCart(item);
+                };
+            });
         }
 
         function renderCard(item) {
             const finalPrice = item.offer || item.price;
-            const safeItem = JSON.stringify(item).replace(/'/g, "&#39;");
             return `
             <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
                 <div class="relative h-32 sm:h-36 w-full bg-gray-50 overflow-hidden">
@@ -485,7 +652,7 @@
                             <span class="font-bold text-sm text-brand">₹${finalPrice}</span>
                             ${item.offer ? `<span class="text-[10px] text-gray-400 line-through">₹${item.price}</span>` : ''}
                         </div>
-                        <button onclick='addToCart(${safeItem})' class="px-3 py-1.5 bg-brandLight text-brand rounded-lg text-xs font-medium hover:bg-brand hover:text-white transition-colors">Add</button>
+                        <button data-item-id="${item.id}" class="px-3 py-1.5 bg-brandLight text-brand rounded-lg text-xs font-medium hover:bg-brand hover:text-white transition-colors">Add</button>
                     </div>
                 </div>
             </div>`;
@@ -556,7 +723,7 @@
             badge.textContent = totalQty;
             badge.style.opacity = totalQty > 0 ? 1 : 0;
             subTotalEl.textContent = `₹${subTotal}`;
-            totalEl.textContent = `₹${subTotal > 0 ? subTotal + 40 : 0}`;
+            totalEl.textContent = `₹${subTotal}`;
 
             stickyQty.textContent = totalQty;
             stickyTotal.textContent = `₹${subTotal}`;
@@ -613,7 +780,7 @@
                 total += item.price * item.qty;
             });
 
-            orderText += `\n*Subtotal:* ₹${total}\n*Delivery:* ₹40\n*Grand Total:* ₹${total + 40}\n\n`;
+            orderText += `\n*Subtotal:* ₹${total}\n*Grand Total:* ₹${total}\n\n`;
             orderText += `*Delivery Time:* ${time}\n*Payment Mode:* ${payment}\n\n`;
             orderText += `Please confirm my order.`;
 
@@ -651,6 +818,8 @@
         // Init
         loadMenu();
         updateCartUI();
+        // Safety net: never let the loader get stuck if something unexpected happens
+        setTimeout(hidePageLoader, 4000);
     </script>
 </body>
 </html>

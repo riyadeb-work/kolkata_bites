@@ -170,7 +170,7 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-            <a href="index.html" class="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors" aria-label="Home">
+            <a href="/" class="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors" aria-label="Home">
                 <i class="ph ph-house text-xl"></i>
             </a>
             <button onclick="toggleCart()" class="relative w-10 h-10 rounded-full bg-brand text-white flex items-center justify-center hover:bg-brandDark transition-colors" aria-label="Cart">
@@ -388,7 +388,7 @@
     // const IMAGE_BASE_URL = "images/menu/";
     const IMAGE_BASE_URL = "images/";
 
-    const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=0&single=true&output=csv`;
+    const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?output=csv`;
     // const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 
     /* =========================================================
@@ -850,7 +850,7 @@
         // If arrived from the main site, browser back keeps history intact.
         // Fall back to the homepage if there's no history (e.g. direct link/QR code).
         if (window.history.length > 1) window.history.back();
-        else window.location.href = 'index.html';
+        else window.location.href = '/';
     }
 
     // Keep cart in sync across tabs/pages

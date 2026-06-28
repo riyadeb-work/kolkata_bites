@@ -272,7 +272,7 @@
             <a href="#reservation" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Reservation</a>
             <a href="#events" onclick="navigateSPA('home')" class="text-sm font-medium nav-link text-gray-100 hover:text-brand transition-colors drop-shadow-md">Events</a>
 
-            <button onclick="window.location.href='menu.html'" class="px-5 py-2 bg-brand text-white rounded-full font-medium hover:bg-brandDark transition-all transform hover:-translate-y-0.5 shadow-lg">
+            <button onclick="window.location.href='/menu'" class="px-5 py-2 bg-brand text-white rounded-full font-medium hover:bg-brandDark transition-all transform hover:-translate-y-0.5 shadow-lg">
                 Menu
             </button>
 
@@ -300,7 +300,7 @@
             <i class="ph-fill ph-house text-[22px]"></i>
             <span class="text-[10px] font-medium">Home</span>
         </a>
-        <a href="menu.html" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
+        <a href="/menu" class="bottom-nav-link flex flex-col items-center justify-center gap-1 py-2.5 text-gray-500 transition-colors">
             <i class="ph ph-bowl-food text-[22px]"></i>
             <span class="text-[10px] font-medium">Menu</span>
         </a>
@@ -509,7 +509,7 @@
                         <span class="text-brand font-medium tracking-widest uppercase text-sm mb-2 block">Our Masterpieces</span>
                         <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-gray-900">Best Sellers</h2>
                     </div>
-                    <button onclick="window.location.href='menu.html'" class="mt-4 md:mt-0 text-brand font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                    <button onclick="window.location.href='/menu'" class="mt-4 md:mt-0 text-brand font-medium flex items-center gap-2 hover:gap-3 transition-all">
                         View Full Menu <i class="ph ph-arrow-right"></i>
                     </button>
                 </div>
@@ -835,7 +835,7 @@
                 <h4 class="font-serif font-bold text-lg mb-6">Quick Links</h4>
                 <ul class="space-y-3 text-gray-400 text-sm">
                     <li><a href="#" onclick="navigateSPA('home'); setTimeout(()=>window.scrollTo(0,0),100)" class="hover:text-brand transition-colors">Home</a></li>
-                    <li><a href="menu.html" class="hover:text-brand transition-colors">Our Menu</a></li>
+                    <li><a href="/menu" class="hover:text-brand transition-colors">Our Menu</a></li>
                     <li><a href="#reservation" class="hover:text-brand transition-colors">Book a Table</a></li>
                     <li><a href="#events" class="hover:text-brand transition-colors">Catering</a></li>
                 </ul>
@@ -920,6 +920,9 @@
     const DISH_OF_MONTH_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQUAENj8kE6uf9d8NpJpb6xHWsn_cyMbgnFDCd2uoUBeSvYgf7WYGXt3ekHdB3eu8BwxBP7glhIRq2A/pub?gid=2003816239&single=true&output=csv`;
     // If you're using the gviz endpoint instead (no "publish to web" needed, sheet must be
     // shared as "Anyone with the link can view"), use this pattern per tab instead:
+    // const SHEET_ID = "1A2B3C_REPLACE_WITH_YOUR_SHEET_ID";
+    // const BEST_SELLERS_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=BEST_SELLERS_GID`;
+    // const DISH_OF_MONTH_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=DISH_OF_MONTH_GID`;
     const IMAGE_BASE_URL = "images/";
 
     // Fallback data shown only if a sheet tab can't be reached (offline demo / first-time setup)

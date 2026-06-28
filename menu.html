@@ -4,8 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1E7D3A">
-    <meta name="description" content="Order from the full Kolkata Bites menu. Authentic Bengali cuisine, delivered hot and fresh.">
-    <title>Our Menu | Kolkata Bites</title>
+
+    <!-- Primary Meta Tags -->
+    <title>Menu | Best Combos & Traditional Bengali Thali in Kolkata</title>
+    <meta name="title" content="Menu | Best Combos & Traditional Bengali Thali in Kolkata">
+    <meta name="description" content="View the full Kolkata Bites menu. Order the best combos, cheapest food, authentic Kolkata Biryani, and traditional Bengali Thali in Belgharia, Nimta & Sodepur.">
+    <meta name="keywords" content="kolkata bites menu, authentic kolkata biryani only here, best bengali traditional thali, best combos, cheapest food kolkata, food delivery belgharia nimta sodepur">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourwebsite.com/menu">
+    <meta property="og:title" content="Kolkata Bites Menu | Order Authentic Biryani & Thalis">
+    <meta property="og:description" content="Order the best and cheapest food in Belgharia, Nimta, and Sodepur. Browse our menu for authentic Kolkata Biryani, best combos, and traditional Bengali thali.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=1200&auto=format&fit=crop">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Kolkata Bites Menu | Best Food in Kolkata">
+    <meta property="twitter:description" content="Browse our menu for authentic Kolkata Biryani, best combos, and traditional Bengali thali. Delivery to Belgharia, Nimta, and Sodepur.">
+    <meta property="twitter:image" content="https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=1200&auto=format&fit=crop">
 
     <!-- Fonts: Playfair Display (Serif/Luxury) & Poppins (Sans/Modern) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -371,6 +388,17 @@
 </footer>
 
 <script>
+    // Utility function to prevent XSS injection
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     /* =========================================================
        CONFIG — edit these to point at your own Google Sheet
     ========================================================= */
@@ -490,22 +518,25 @@
                 return i > -1 ? (cols[i] || '').trim() : '';
             };
 
-            const name = get('name') || get('food_name') || get('item_name');
+            const name = escapeHTML(get('name') || get('food_name') || get('item_name'));
             if (!name) return null;
 
             const price = parseFloat(get('price')) || 0;
             const offerRaw = get('offer_price') || get('offer');
             const offer = offerRaw ? parseFloat(offerRaw) : null;
-            const imageFile = get('image') || get('image_file_name') || get('image_filename');
+
+            let imageFile = get('image') || get('image_file_name') || get('image_filename');
+            if (imageFile) imageFile = imageFile.replace(/[<>"]/g, '');
+
             const img = imageFile
                 ? (imageFile.startsWith('http') ? imageFile : IMAGE_BASE_URL + imageFile)
                 : `https://placehold.co/600x400/E8F3EB/1E7D3A?text=${encodeURIComponent(name)}`;
             const isVeg = ['yes', 'true', 'veg', '1'].includes((get('is_veg') || get('veg')).toLowerCase());
             const rating = parseFloat(get('rating')) || null;
-            const desc = get('description') || get('desc');
-            const availableRaw = (get('available') || 'yes').toLowerCase();
+            const desc = escapeHTML(get('description') || get('desc'));
+            const availableRaw = escapeHTML(get('available') || 'yes').toLowerCase();
             const available = !['no', 'false', '0'].includes(availableRaw);
-            const category = normalizeCategory(get('category')) || 'Specials';
+            const category = escapeHTML(normalizeCategory(get('category')) || 'Specials');
 
             return {
                 id: 'sheet-' + idx,

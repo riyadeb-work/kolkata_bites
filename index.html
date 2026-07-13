@@ -571,7 +571,7 @@
                 </div>
 
                 <!-- Food Slider (Injected by JS via Swiper) -->
-                <div class="relative lg:px-8">
+                <div class="relative lg:px-8" id="best-seller-content">
                     <div class="swiper bestSellerSwiper" id="best-seller-swiper">
                         <div class="swiper-wrapper" id="food-grid">
                             <div class="swiper-slide"><div class="rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton h-56 rounded-2xl"></div><div class="px-2 pt-4"><div class="skeleton h-3 w-3/4 mb-2 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div></div>
@@ -588,6 +588,12 @@
                         <i class="ph-bold ph-caret-right text-base"></i>
                     </button>
                 </div>
+
+                <!-- Shown only if the sheet has no best-seller rows (or can't be reached) -->
+                <div id="best-seller-empty" class="hidden flex flex-col items-center justify-center text-center py-16 text-gray-400">
+                    <i class="ph-duotone ph-bowl-food text-5xl mb-4"></i>
+                    <p class="font-medium text-gray-600">No best sellers available right now.</p>
+                </div>
             </div>
         </section>
 
@@ -596,7 +602,25 @@
             <div class="absolute -right-40 -top-40 w-96 h-96 bg-brand/10 rounded-full blur-3xl"></div>
 
             <div class="container mx-auto px-5 sm:px-6 md:px-12 relative z-10">
-                <div class="group bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col lg:flex-row gs-reveal transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-15px_rgba(30,125,58,0.35)]">
+                <!-- Skeleton (shown while sheet data is fetched) -->
+                <div id="dish-of-month-skeleton" class="bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+                    <div class="lg:w-2/5 h-[280px] sm:h-[340px] lg:h-auto skeleton"></div>
+                    <div class="lg:w-3/5 p-6 sm:p-10 lg:p-16 flex flex-col justify-center gap-4">
+                        <div class="skeleton h-5 w-40 rounded-full"></div>
+                        <div class="skeleton h-8 w-3/4 rounded"></div>
+                        <div class="skeleton h-3 w-full rounded"></div>
+                        <div class="skeleton h-3 w-5/6 rounded"></div>
+                        <div class="skeleton h-14 w-full rounded-2xl mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Shown only if the sheet has no Dish of the Month row (or can't be reached) -->
+                <div id="dish-of-month-empty" class="hidden flex flex-col items-center justify-center text-center py-16 text-gray-400 bg-white rounded-[40px] shadow-2xl">
+                    <i class="ph-duotone ph-star text-5xl mb-4"></i>
+                    <p class="font-medium text-gray-600">No dish of the month available right now.</p>
+                </div>
+
+                <div id="dish-of-month-content" class="hidden group bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col lg:flex-row gs-reveal transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-15px_rgba(30,125,58,0.35)]">
                     <div class="lg:w-2/5 relative h-[280px] sm:h-[340px] lg:h-auto overflow-hidden">
                         <img id="dish-of-month-img" src="" alt="Dish of the Month" class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 sm:p-8">
@@ -981,24 +1005,9 @@
     // const DISH_OF_MONTH_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=DISH_OF_MONTH_GID`;
     const IMAGE_BASE_URL = "images/";
 
-    // Fallback data shown only if a sheet tab can't be reached (offline demo / first-time setup)
-    const FALLBACK_BEST_SELLERS = [
-        { id: 'f1', name: 'Authentic Chicken Biryani', desc: 'Aromatic basmati rice cooked with tender chicken and secret spices.', price: 250, offer: 220, isVeg: false, rating: 4.8, img: 'https://i.postimg.cc/bvhxyytL/food.webp' },
-        { id: 'f2', name: 'Bengali Fish Curry', desc: 'Traditional Rui Maach (Rohu Fish) in a mustard and tomato gravy.', price: 180, offer: null, isVeg: false, rating: 4.7, img: 'https://i.postimg.cc/bvhxyytL/food.webp' },
-        { id: 'f3', name: 'Paneer Butter Masala', desc: 'Soft cottage cheese cubes in a creamy, rich tomato gravy.', price: 220, offer: null, isVeg: true, rating: 4.6, img: 'https://i.postimg.cc/bvhxyytL/food.webp' },
-        { id: 'f4', name: 'Mutton Dakbungalow', desc: 'Heritage recipe with slow-cooked mutton, egg, and potato.', price: 350, offer: 320, isVeg: false, rating: 4.9, img: 'https://i.postimg.cc/bvhxyytL/food.webp' }
-    ];
-    const FALLBACK_DISH_OF_MONTH = {
-        id: 'c1', name: 'Loading...',
-        desc: 'This recipe has been passed down through generations. Slow-cooked mutton in rich, aromatic spices, served with sweet and fragrant yellow rice. It is not just food; it is an emotion on a plate.',
-        price: 550, offer: 450, isVeg: false,
-        img: 'https://i.postimg.cc/bvhxyytL/food.webp',
-        featureImg: 'https://i.postimg.cc/bvhxyytL/food.webp',
-        overlayTitle: 'Limited Time Only',
-        overlaySubtitle: 'Featured this month'
-    };
-
-    let foodItems = FALLBACK_BEST_SELLERS;
+    // The sheet is the single source of truth for both Best Sellers and Dish of the
+    // Month — no fallback/sample data is used. If a tab is unreachable or returns no
+    // valid rows, the "no items available" state is shown for that section.
 
     // Same robust CSV parser used on menu.html (handles quoted fields with commas/newlines)
     function parseCSV(text) {
@@ -1096,24 +1105,31 @@
             if (!items.length) throw new Error('No rows parsed');
             foodItems = items;
         } catch (err) {
-            console.error('Best Sellers sheet load failed, using fallback data:', err);
-            foodItems = FALLBACK_BEST_SELLERS;
+            console.error('Best Sellers sheet load failed:', err);
+            foodItems = [];
         }
         renderFoodGrid();
     }
 
     async function loadDishOfMonth() {
-        let dish = FALLBACK_DISH_OF_MONTH;
+        const skeleton = document.getElementById('dish-of-month-skeleton');
+        const empty = document.getElementById('dish-of-month-empty');
+        const content = document.getElementById('dish-of-month-content');
         try {
             const res = await fetch(DISH_OF_MONTH_CSV_URL);
             if (!res.ok) throw new Error('Network response was not ok');
-            const parsed = parseDishOfMonthCSV(await res.text());
-            if (!parsed) throw new Error('No rows parsed');
-            dish = parsed;
+            const dish = parseDishOfMonthCSV(await res.text());
+            if (!dish) throw new Error('No rows parsed');
+            renderDishOfMonth(dish);
+            skeleton.classList.add('hidden');
+            empty.classList.add('hidden');
+            content.classList.remove('hidden');
         } catch (err) {
-            console.error("Dish of the Month sheet load failed, using fallback data:", err);
+            console.error('Dish of the Month sheet load failed:', err);
+            skeleton.classList.add('hidden');
+            content.classList.add('hidden');
+            empty.classList.remove('hidden');
         }
-        renderDishOfMonth(dish);
     }
 
     function renderDishOfMonth(dish) {
@@ -1276,7 +1292,18 @@
 
     function renderFoodGrid() {
         const grid = document.getElementById('food-grid');
-        if(!grid) return;
+        const content = document.getElementById('best-seller-content');
+        const empty = document.getElementById('best-seller-empty');
+        if (!grid) return;
+
+        if (!foodItems.length) {
+            if (content) content.classList.add('hidden');
+            if (empty) empty.classList.remove('hidden');
+            return;
+        }
+        if (content) content.classList.remove('hidden');
+        if (empty) empty.classList.add('hidden');
+
         grid.innerHTML = foodItems.map((item, index) => {
             const finalPrice = item.offer || item.price;
             return `
